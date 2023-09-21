@@ -1,0 +1,41 @@
+{
+	constants: {
+		e: math.e,
+		log2e: math.log2e,
+		log10e: math.log10e,
+		ln2: math.ln2,
+		ln10: math.ln10,
+		pi: math.pi,
+		pi2: math.pi2,
+		pi4: math.pi4,
+		r1pi: math.r1pi,
+		r2pi: math.r2pi,
+		r2sqrtpi: math.r2sqrtpi,
+		sqrt2: math.sqrt2,
+		rsqrt2: math.rsqrt2
+	},
+	methods: {
+		acos: math.acos(0.4),
+		asin: math.asin(0.4),
+		atan: math.atan(0.4),
+		atan2: math.atan2(0.4, 0.6),
+		cos: math.cos(0.4),
+		cosh: math.cosh(0.4),
+		sin: math.sin(0.4),
+		sinh: math.sinh(0.4),
+		tan: math.tan(0.4),
+		tanh: math.tanh(0.4),
+		exp: math.exp(0.4),
+		ldexp: math.ldexp(0.4, 10),
+		log: math.log(40.4),
+		log10: math.log10(0.4),
+		pow: math.pow(4, 2),
+		sqrt: math.sqrt(16),
+		ceil: math.ceil(10.6),
+		fabs: math.fabs(41.2),
+		floor: math.floor(10.2),
+		fmod: math.fmod(10, 0.4),
+		frexp: math.frexp(10.4),
+		modf: math.modf(10.4)
+	}
+}

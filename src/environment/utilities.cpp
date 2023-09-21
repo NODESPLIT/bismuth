@@ -1,0 +1,22 @@
+namespace Utilities {
+	void Bind(Scope environment) {
+		(*environment)["log"] = Value::Bound(
+			[](ArrayValue arguments) {
+				for (int i = 0; i < arguments.size(); i++) {
+					cout << ( i == 0 ? "" : " " );
+					cout << ( arguments[i]->is(String) ? arguments[i]->as<string>() : arguments[i]->describe() );
+				}
+
+				if (arguments.size() > 0) cout << endl;
+				return Value::Empty();
+			}
+		);
+
+		(*environment)["plog"] = Value::Bound(
+			[](ArrayValue arguments) {
+				for (int i = 0; i < arguments.size(); i++) cout << ( arguments[i]->is(String) ? arguments[i]->as<string>() : arguments[i]->describe(0) ) << endl;
+				return Value::Empty();
+			}
+		);
+	}
+}

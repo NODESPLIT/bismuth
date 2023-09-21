@@ -1,0 +1,55 @@
+FIGURE OUT A NAME
+- bismuth (.bis / .bism)
+- opal (.opal)
+- citrine (.cit)
+- agate (.aga)
+
+if statements
+when statements
+Set up multi character operators
+Set up all standard operators
+Figure out type system
+Add type specific methods to index (things like 'one, two, three'.split(','), this could also be 'one, two, three' / ',' to be fair)
+Include keyword to load and insert file contents into string at lexer ( insert('file.jom') ) - maybe consider not doing this
+Set up single line and multiline comments, probably just use //
+Write up syntax markup for sublime text, look into others
+
+SCOPE CONTROL
+
+allow script to define the scope within a block of code:
+
+table = { scope variables here }
+scope table {
+	
+}
+
+and
+
+scope { scope variables here } {
+	
+}
+
+or 
+
+table = { scope variables here }
+table {
+	
+}
+
+and
+
+{ scope variables here } {
+	
+}
+
+or have either of these and
+
+with table {
+	
+}
+
+(which would extend the scope vs isolate it)
+
+This would allow describe to basically create a snapshot of a function
+(at any point in a table or array too) and save it as a string, this string
+can then simply just be imported
