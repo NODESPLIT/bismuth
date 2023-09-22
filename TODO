@@ -1,5 +1,5 @@
 FIGURE OUT A NAME
-- bismuth (.bis / .bism)
+- bismuth (.bi / .bis / .bism)
 - opal (.opal)
 - citrine (.cit)
 - agate (.aga)
@@ -53,3 +53,6 @@ with table {
 This would allow describe to basically create a snapshot of a function
 (at any point in a table or array too) and save it as a string, this string
 can then simply just be imported
+
+Use https://www.boost.org/doc/libs/1_66_0/doc/html/boost_dll.html#boost_dll.introduction for plugin system to
+add functionality with c++ plugins - I want to improve the binding apis first though

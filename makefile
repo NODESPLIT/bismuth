@@ -20,6 +20,10 @@ debug:
 	make options=-g build
 	lldb -o run bismuth verbose $(script)
 
+deploy:
+	make build
+	make install
+
 install:
 	rm /usr/local/bin/bismuth
 	cp bismuth /usr/local/bin/bismuth

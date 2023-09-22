@@ -2,7 +2,7 @@ one = 0
 two = 1
 next = two
 
-128 : [] {
+6 : [] {
   result = one
   next = one + two
   one = two
