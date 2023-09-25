@@ -1,5 +1,5 @@
 namespace Utilities {
-	void Bind(Scope environment) {
+	void Bind(Scope environment, Parser* parser) {
 		(*environment)["log"] = Value::Bound(
 			[](ArrayValue arguments) {
 				for (int i = 0; i < arguments.size(); i++) {
@@ -7,7 +7,7 @@ namespace Utilities {
 					cout << ( arguments[i]->is(String) ? arguments[i]->as<string>() : arguments[i]->describe() );
 				}
 
-				if (arguments.size() > 0) cout << endl;
+				cout << endl;
 				return Value::Empty();
 			}
 		);

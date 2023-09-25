@@ -1,5 +1,5 @@
 namespace Math {
-	void Bind(Scope environment) {
+	void Bind(Scope environment, Parser* parser) {
 		(*environment)["math"] = Value::Empty(Table);
 
 		(*environment)["math"]->set("e", Value::Make(M_E));

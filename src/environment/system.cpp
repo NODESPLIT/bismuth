@@ -8,7 +8,7 @@ namespace System {
 			Lexer::Tokens(script, &tokens);
 
 			Scope scope = make_shared<ScopeValue>();
-			(*scope)["PATH"] = Value::Make(path);
+			Parser::Setup(scope, path, arguments[1]);
 
 			Reference result = parser->run(&tokens, scope);
 			return result;

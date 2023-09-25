@@ -1,4 +1,6 @@
-enum Type { Boolean, Number, Range, String, Array, Table, Block, Void };
+typedef function<Reference(Reference, Reference, Parser* parser, Scope scope)> Operation;
+
+enum Type { Boolean, Number, Range, String, Array, Table, Block, Void, Any };
 unordered_map<Type, string> Typename = {
 	{ Boolean, "Boolean" },
 	{ Number, "Number" },
@@ -11,13 +13,14 @@ unordered_map<Type, string> Typename = {
 };
 
 struct Operator {
-	static unordered_map<string, Operator> List;
-	enum Pairing { Unary, Binary, Ternary };
-	enum Category { Unery, Arithmetic, Relational, Logical, Bitwise, Assignment, Conditional, Inside };
-	int priority;
-	Pairing pairing;
-	Category category;
-	unordered_map<Type, unordered_map<Type, function<Reference(Reference, Reference, Parser* parser, Scope scope)>>> operations;
+	public:
+		static unordered_map<string, Operator> List;
+		enum Pairing { Unary, Binary, Ternary };
+		enum Category { Unery, Arithmetic, Relational, Logical, Bitwise, Assignment, Conditional, Inside };
+		int priority;
+		Pairing pairing;
+		Category category;
+		unordered_map<Type, unordered_map<Type, Operation>> operations;
 };
 
 // const map<string, Operator> Operators = {

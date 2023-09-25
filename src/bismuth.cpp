@@ -7,6 +7,7 @@
 #include <regex>
 #include <vector>
 #include <unordered_map>
+#include <map>
 #include <any>
 
 #include <ncurses.h>
@@ -17,10 +18,19 @@
 using namespace std;
 
 namespace Bismuth {
-	const string Name = "Bismuth";
+	const string Name = "bismuth";
 	const string Version = "0.0.1";
+	const string Stamp = string(Name) + " v" + string(Version);
 	const vector<string> Extensions = { "bi", "bis" };
 	const string Index = "index";
+
+	namespace Log {
+		string Indent(int depth) {
+			string indentation = "";
+			for (int i = 0; i < depth; i++) indentation += "  ";
+			return indentation;
+		}
+	};
 
 	namespace Search {
 		static string File(string path) {
@@ -66,27 +76,11 @@ namespace Bismuth {
 	typedef unordered_map<string, Reference> ScopeValue;
 	typedef shared_ptr<ScopeValue> Scope;
 
-	#include "log.cpp"
 	#include "operators.cpp"
 	#include "lexer.cpp"
 	#include "value.cpp"
 	#include "parser.cpp"
 	#include "operations.cpp"
 	#include "environment.cpp"
-	#include "terminal.cpp"
-
-	void Repl(bool verbose=false) {
-		Parser parser = Parser();
-
-		Terminal terminal;
-		terminal.println(string(Name) + " v" + string(Version));
-
-		while (true) {
-			string line = terminal.prompt("$>");
-			if (!line.compare("exit")) break;
-
-			Reference result = parser.run(line, verbose);
-			terminal.println("\n=> " + result->describe(0));
-		}
-	}
+	#include "repl.cpp"
 }
