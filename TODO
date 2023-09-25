@@ -1,58 +1,99 @@
-FIGURE OUT A NAME
-- bismuth (.bi / .bis / .bism)
-- opal (.opal)
-- citrine (.cit)
-- agate (.aga)
+Functionality:
 
-if statements
-when statements
-Set up multi character operators
-Set up all standard operators
-Figure out type system
-Add type specific methods to index (things like 'one, two, three'.split(','), this could also be 'one, two, three' / ',' to be fair)
-Include keyword to load and insert file contents into string at lexer ( insert('file.jom') ) - maybe consider not doing this
-Set up single line and multiline comments, probably just use //
-Write up syntax markup for sublime text, look into others
+-4 Set up all standard operators
+-3 |= operator to set a variable to a value only if its falsy
+-3 Calling string uses it as a format string with the arguments as the values
+-3 Work out cool ways inside operator could work
+-3 Add reduce operator like colon but takes initial value and reduces with it: maybe just use inside with parameters for this instead
+-3 Build solid standard library with:
+	- Time
+	- Logging: log / plog done - need to add raw print
+	+ Math
+	+ Import
+-3 Error handling with try/catch (resolves to value like everything else)
+-2 Figure out type system: Add type specific methods to type (things like 'one, two, three'.split(','), this could also be 'one, two, three' / ',' to be fair)
+-2 When statements
+-2 Make system for block values that checks if a method is pure and caches arguments against results
+-2 Destructuring
+-2 Regex support
+-1 Look into pipe operators (recommended to look at elixir)
+-1 Include keyword to load and insert file contents into string at lexer ( insert('file.jom') ): might not actually support this functionality
+-1 Figure out getters on tables
+-1 Figure out system similar to "metatable" but using nice syntax
++4 Set up single line and multiline comments, probably just use //
++4 Default values in block arguments: made all default values resolve a statement
++4 Return keyword
 
-SCOPE CONTROL
 
-allow script to define the scope within a block of code:
+Optimisation:
 
-table = { scope variables here }
-scope table {
-	
-}
+-4 Recursion seems to be creating endless loops (or really slow): could be scope shared pointer reaching limits of creation???
+-4 Detect when blocks are pure and cache their results against args in memory
++4 Change token type system to stop using string comparison (lmao)
+	this took recursive fib(20) down 250ms
 
-and
 
-scope { scope variables here } {
-	
-}
+Bugs:
 
-or 
++4 Number token is missing - before number in a few cases with tokens vector being random data sometimes
++4 Recursion is throwing segfault
 
-table = { scope variables here }
-table {
-	
-}
 
-and
+Project:
 
-{ scope variables here } {
-	
-}
++4 Make repl nicer to use
++1 FIGURE OUT A NAME
+	bismuth (.bi / .bis / .bism)
+	opal (.opal)
+	citrine (.cit)
+	agate (.aga)
 
-or have either of these and
 
-with table {
-	
-}
+Later:
 
-(which would extend the scope vs isolate it)
+-4 Write up syntax markup for sublime text, look into others
+-3 Allow piped input to pipe different bismuth command's results together (use same system as import to define env variables)
+-2 SCOPE CONTROL
 
-This would allow describe to basically create a snapshot of a function
-(at any point in a table or array too) and save it as a string, this string
-can then simply just be imported
+	allow script to define the scope within a block of code:
 
-Use https://www.boost.org/doc/libs/1_66_0/doc/html/boost_dll.html#boost_dll.introduction for plugin system to
-add functionality with c++ plugins - I want to improve the binding apis first though
+	table = { scope variables here }
+	scope table {
+		
+	}
+
+	and
+
+	scope { scope variables here } {
+		
+	}
+
+	or 
+
+	table = { scope variables here }
+	table {
+		
+	}
+
+	and
+
+	{ scope variables here } {
+		
+	}
+
+	or have either of these and
+
+	with table {
+		
+	}
+
+	(which would extend the scope vs isolate it)
+
+	This would allow describe to basically create a snapshot of a function
+	(at any point in a table or array too) and save it as a string, this string
+	can then simply just be imported
+
+-1 Plugin system to add functionality with c++ plugins
+	Use https://www.boost.org/doc/libs/1_66_0/doc/html/boost_dll.html#boost_dll.introduction
+	I want to improve the binding apis first though
+
