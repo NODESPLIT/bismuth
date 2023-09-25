@@ -1,3 +1,8 @@
+log(@.path)
+log(@.in)
+
+test
+
 {
 	animals: [
 		{
