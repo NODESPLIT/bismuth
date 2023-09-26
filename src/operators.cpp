@@ -1,15 +1,15 @@
 typedef function<Reference(Reference, Reference, Parser* parser, Scope scope)> Operation;
 
-enum Type { Boolean, Number, Range, String, Array, Table, Block, Void, Any };
+enum class Type { Boolean, Number, Range, String, Array, Table, Block, Void, Any };
 unordered_map<Type, string> Typename = {
-	{ Boolean, "Boolean" },
-	{ Number, "Number" },
-	{ Range, "Range" },
-	{ String, "String" },
-	{ Table, "Table" },
-	{ Array, "Array" },
-	{ Block, "Block" },
-	{ Void, "Void" }
+	{ Type::Boolean, "Boolean" },
+	{ Type::Number, "Number" },
+	{ Type::Range, "Range" },
+	{ Type::String, "String" },
+	{ Type::Table, "Table" },
+	{ Type::Array, "Array" },
+	{ Type::Block, "Block" },
+	{ Type::Void, "Void" }
 };
 
 struct Operator {

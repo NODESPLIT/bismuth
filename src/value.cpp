@@ -1,59 +1,31 @@
-struct Argument {
-	string name = "";
-	vector<Lexer::Token> initial = {};
-};
-
 class Value {
 	public:
+		class Static { public: static Reference True, False, Void; };
 		static unordered_map<Lexer::Token::Type, Type> Translation;
 
 		static Reference Make() { return make_shared<Value>(); }
-
 		template <class T> static Reference Make(T one) { return make_shared<Value>(one); }
 		template <class T1, class T2> static Reference Make(T1 one, T2 two) { return make_shared<Value>(one, two); }
 
-		static Reference Lock(Reference value) { value->immutable = true; return value; }
-		
-		class Static { public: static Reference True, False, Void; };
-
 		static Reference Empty() { return Make(); }
 		static Reference Empty(Type type) {
-			if (type == Array) {
+			if (type == Type::Array) {
 				return Make(ArrayValue{});
-			} else if (type == Table) {
+			} else if (type == Type::Table) {
 				return Make(TableValue{});
 			}
 
 			return Empty();
 		}
 
-		static Reference Copy(Reference from) {
-			Reference copy = Empty();
-			copy->set(from);
-			return copy;
-		}
+		static Reference Lock(Reference value) { value->immutable = true; return value; }
+		static Reference Copy(Reference from) { Reference copy = Empty(); copy->set(from); return copy; }
 
-		static Reference Dig(Reference value, ArrayValue path={}) {
-			Reference result = value;
-			for (auto &key : path) result = result->get(key);
-			return result;
-		}
-
-		static Reference Bound(function<Reference(ArrayValue)> binding) {
-			Reference value = Make();
-			value->type = Block;
-			value->binding = binding;
-			return value;
-		}
+		static Reference Bound(function<Reference(ArrayValue)> binding) { return Make(make_shared<Block>(binding)); }
 
 		bool immutable = false;
-
-		Type type = Void;
-		vector<vector<Lexer::Token>> inside = {};
-		function<Reference(ArrayValue)> binding;
-		vector<Argument> arguments;
-		string description = "";
-		Scope context;
+		Type type = Type::Void;
+		shared_ptr<Block> block;
 		any value;
 
 		bool is(Type type) { return this->type == type; }
@@ -61,8 +33,6 @@ class Value {
 		template <class T> T as() { return any_cast<T>(value); }
 
 		string describe(NumberValue number) {
-			if (!description.empty()) return description;
-
 			std::stringstream stream;
 	    stream.precision(numeric_limits<NumberValue>::digits10);
 	    stream << number;
@@ -83,16 +53,16 @@ class Value {
 			bool readable = indent > -1;
 			string before = ( readable ? Log::Indent(indent) : "" ) + prefix;
 
-			if (is(Boolean)) {
+			if (is(Type::Boolean)) {
 				return before + ( as<bool>() ? "true" : "false" );
-			} else if (is(Number)) {
+			} else if (is(Type::Number)) {
 				return before + describe(as<NumberValue>());
-			} else if (is(Range)) {
+			} else if (is(Type::Range)) {
 				RangeValue value = as<RangeValue>();
 				return before + "( " + describe(std::get<0>(value)) + " -> " + describe(std::get<1>(value)) + " )";
-			} else if (is(String)) {
+			} else if (is(Type::String)) {
 				return before + "'" + as<string>() + "'";
-			} else if (is(Array)) {
+			} else if (is(Type::Array)) {
 				string output = readable ? "[\n" : "[ ";
 				
 				for (int i = 0; i < length(); i++) {
@@ -101,7 +71,7 @@ class Value {
 				}
 
 				return before + output + ( readable ? "\n" + Log::Indent(indent) + "]" : " ]" );
-			} else if (is(Table)) {
+			} else if (is(Type::Table)) {
 				string output = readable ? "{\n" : "{ ";
 				
 				TableValue values = as<TableValue&>();
@@ -111,7 +81,7 @@ class Value {
 				}
 
 				return before + output + ( readable ? "\n" + Log::Indent(indent) + "}" : " }" );
-			} else if (is(Block)) {
+			} else if (is(Type::Block)) {
 				return before + "'{ Block }'";
 			}
 
@@ -122,32 +92,27 @@ class Value {
 		Reference get(string key) { return as<TableValue>()[key]; }
 
 		int length() {
-			if (is(String)) return as<string>().size();
-			if (is(Array)) return as<ArrayValue>().size();
-			if (is(Table)) return as<TableValue>().size();
+			if (is(Type::String)) return as<string>().size();
+			if (is(Type::Array)) return as<ArrayValue>().size();
+			if (is(Type::Table)) return as<TableValue>().size();
 			return 0;
 		}
 
 		Reference get(Reference key) {
-			if (is(String) && key->is(Number)) return Make(as<string>().at((int)key->as<NumberValue>()));
-			if (is(Array) && ( key->is(Number) || key->is(String) )) return as<ArrayValue>()[key->is(Number) ? (int)key->as<NumberValue>() : stod(key->as<string>())];
-			if (is(Table)) return as<TableValue>()[ key->is(String) ? key->as<string>() : key->describe() ];
+			if (is(Type::String) && key->is(Type::Number)) return Make(as<string>().at((int)key->as<NumberValue>()));
+			if (is(Type::Array) && ( key->is(Type::Number) || key->is(Type::String) )) return as<ArrayValue>()[key->is(Type::Number) ? (int)key->as<NumberValue>() : stod(key->as<string>())];
+			if (is(Type::Table)) return as<TableValue>()[ key->is(Type::String) ? key->as<string>() : key->describe() ];
 			return Empty();
 		}
 
 		void set(Reference to) {
 			type = to->type;
-			if (type == Block) context = to->context;
-			inside = vector<vector<Lexer::Token>>(to->inside);
-			description = to->description;
-			context = to->context;
-			arguments = to->arguments;
-			binding = to->binding;
 			value = to->value;
+			block = to->block;
 		}
 
 		void set(int index, Reference to) {
-			if (type != Array) return;
+			if (type != Type::Array) return;
 			ArrayValue array = as<ArrayValue&>();
 			if (index < 0 || index > array.size()) return;
 			if (index == array.size()) array.push_back(Empty());
@@ -156,7 +121,7 @@ class Value {
 		}
 
 		void set(string key, Reference to) {
-			if (type != Table) return;
+			if (type != Type::Table) return;
 			TableValue table = as<TableValue&>();
 			if (!table.count(key)) table[key] = Empty();
 			table[key]->set(to);
@@ -165,35 +130,35 @@ class Value {
 
 		void set(Reference field, Reference to) {
 			if (!field) { set(to); return; }
-			if (is(Array)) { set(field->is(Number) ? (int)field->as<NumberValue>() : stod(field->as<string>()), to); return; }
-			if (is(Table)) set(field->is(String) ? field->as<string>() : field->describe(), to);
+			if (is(Type::Array)) { set(field->is(Type::Number) ? (int)field->as<NumberValue>() : stod(field->as<string>()), to); return; }
+			if (is(Type::Table)) set(field->is(Type::String) ? field->as<string>() : field->describe(), to);
 		}
 
 		bool compare(Reference with) {
 			if (with->type != type) {
-				if (type == Boolean && with->type == Void) return !as<bool>();
-				if (type == Void && with->type == Boolean) return !with->as<bool>();
-				if (type == Number && with->type == Void) return as<NumberValue>() == 0;
-				if (type == Void && with->type == Number) return with->as<NumberValue>() == 0;
-				if (type == Boolean && with->type == Number) return as<bool>() == with->as<NumberValue>() > 0;
-				if (type == Number && with->type == Boolean) return with->as<bool>() == as<NumberValue>() > 0;
+				if (type == Type::Boolean && with->type == Type::Void) return !as<bool>();
+				if (type == Type::Void && with->type == Type::Boolean) return !with->as<bool>();
+				if (type == Type::Number && with->type == Type::Void) return as<NumberValue>() == 0;
+				if (type == Type::Void && with->type == Type::Number) return with->as<NumberValue>() == 0;
+				if (type == Type::Boolean && with->type == Type::Number) return as<bool>() == with->as<NumberValue>() > 0;
+				if (type == Type::Number && with->type == Type::Boolean) return with->as<bool>() == as<NumberValue>() > 0;
 				
 				return false;
 			} else {
-				if (type == Void) return true;
-				if (type == Boolean) return as<bool>() == with->as<bool>();
-				if (type == Number) return as<NumberValue>() == with->as<NumberValue>();
-				if (type == Range) return as<RangeValue>() == with->as<RangeValue>();
-				if (type == String) return as<string>().compare(with->as<string>()) == 0;
+				if (type == Type::Void) return true;
+				if (type == Type::Boolean) return as<bool>() == with->as<bool>();
+				if (type == Type::Number) return as<NumberValue>() == with->as<NumberValue>();
+				if (type == Type::Range) return as<RangeValue>() == with->as<RangeValue>();
+				if (type == Type::String) return as<string>().compare(with->as<string>()) == 0;
 			}
 
 			return false;
 		}
 
 		bool truthy() {
-			if (type == Void) return false;
-			if (type == Boolean) return as<bool>();
-			if (type == Number) return as<NumberValue>() > 0;
+			if (type == Type::Void) return false;
+			if (type == Type::Boolean) return as<bool>();
+			if (type == Type::Number) return as<NumberValue>() > 0;
 			return true;
 		}
 
@@ -201,58 +166,41 @@ class Value {
 
 		Value(){}
 
-		Value(bool boolean) { this->type = Boolean; this->value = boolean; }
-		Value(int number) { this->type = Number; this->value = NumberValue(number); }
-		Value(float number) { this->type = Number; this->value = NumberValue(number); }
-		Value(NumberValue number) { this->type = Number; this->value = number; }
-		Value(NumberValue from, NumberValue to) { this->type = Range; this->value = RangeValue{ from, to }; }
-		Value(string string) { this->type = String; this->value = string; }
-		Value(ArrayValue array) { this->type = Array; this->value = array; }
-		Value(TableValue table) { this->type = Table; this->value = table; }
+		Value(bool boolean) { type = Type::Boolean; value = boolean; }
+		Value(int number) { type = Type::Number; value = NumberValue(number); }
+		Value(float number) { type = Type::Number; value = NumberValue(number); }
+		Value(NumberValue number) { type = Type::Number; value = number; }
+		Value(NumberValue from, NumberValue to) { type = Type::Range; value = RangeValue{ from, to }; }
+		Value(string string) { type = Type::String; value = string; }
+		Value(ArrayValue array) { type = Type::Array; value = array; }
+		Value(TableValue table) { type = Type::Table; value = table; }
+
+		Value(shared_ptr<Block> block) {
+			type = Type::Block;
+			this->block = block;
+		}
 
 		Value(Lexer::Token* token, Scope scope) {
-			this->inside = token->inside;
 			if (Value::Translation.count(token->type)) type = Value::Translation[token->type];
 
-			if (type == Number) {
-				description = token->contents;
+			if (type == Type::Number) {
 				value = stod(token->contents);
-			} else if (type == String) {
+			} else if (type == Type::String) {
 				value = token->contents;
-			} else if (type == Block) {
-				context = scope;
-
-				Argument argument = Argument();
-				bool defaulting = false;
-
-				for (int i = 0; i <= inside[0].size(); i++) {
-					if (argument.name.empty()) {
-						if (inside[0][i].is(Lexer::Token::Type::Word)) {
-							argument.name = inside[0][i].contents;
-						}
-					} else {
-						if (inside[0][i].is(Lexer::Token::Type::Comma) || i == inside[0].size()) {
-							arguments.push_back(argument);
-							argument = Argument();
-							defaulting = false;
-						} else if (inside[0][i].is(Lexer::Token::Type::Operator, "=")) {
-							defaulting = true;
-						} else {
-							argument.initial.push_back(inside[0][i]);
-						}
-					}
-				}
+			} else if (type == Type::Block) {
+				block = make_shared<Block>(token, scope);
 			}
 		}
 };
 
 unordered_map<Lexer::Token::Type, Type> Value::Translation = {
-	{ Lexer::Token::Type::Number, Number },
-	{ Lexer::Token::Type::String, String },
-	{ Lexer::Token::Type::Table, Table },
-	{ Lexer::Token::Type::Array, Array },
-	{ Lexer::Token::Type::Block, Block }
+	{ Lexer::Token::Type::Number, Type::Number },
+	{ Lexer::Token::Type::String, Type::String },
+	{ Lexer::Token::Type::Table, Type::Table },
+	{ Lexer::Token::Type::Array, Type::Array },
+	{ Lexer::Token::Type::Block, Type::Block }
 };
 
 Reference Value::Static::True = Value::Lock(Value::Make(true));
 Reference Value::Static::False = Value::Lock(Value::Make(false));
+Reference Value::Static::Void = Value::Lock(Value::Make());

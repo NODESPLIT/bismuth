@@ -13,7 +13,7 @@ class Parser {
 
 		static void Setup(Scope scope, string path) { Setup(scope, path, Value::Empty()); }
 		static void Setup(Scope scope, string path, Reference input) {
-			(*scope)["@"] = Value::Empty(Table);
+			(*scope)["@"] = Value::Empty(Type::Table);
 			(*scope)["@"]->set("path", Value::Lock(Value::Make(path)));
 			(*scope)["@"]->set("in", input ? Value::Lock(Value::Copy(input)) : Value::Empty());
 		}
@@ -50,7 +50,7 @@ class Parser {
 
 			for (int i = 0; i <= (*tokens).size(); i++) {
 				if (i == (*tokens).size() || ( (*tokens)[i].is(Lexer::Token::Type::Comma) || (*tokens)[i].is(Lexer::Token::Type::End) )) {
-					if (step.size() > 0) output.push_back(Value::Copy(resolve(&step, scope)));
+					if (step.size() > 0) output.push_back(resolve(&step, scope));
 					step.clear();
 				} else {
 					if (!(*tokens)[i].is(Lexer::Token::Type::Comma) || (*tokens)[i].is(Lexer::Token::Type::End)) step.push_back((*tokens)[i]);
@@ -70,7 +70,7 @@ class Parser {
 			for (int i = 0; i <= (*tokens).size(); i++) {
 				if (named) {
 					if (step.size() > 0 && i == (*tokens).size() || ( (*tokens)[i].is(Lexer::Token::Type::Comma) || (*tokens)[i].is(Lexer::Token::Type::End) )) {
-						if (step.size() > 0) output[name] = Value::Copy(resolve(&step, scope));
+						if (step.size() > 0) output[name] = resolve(&step, scope);
 						step.clear(); name = ""; named = false;
 					} else {
 						if (!(*tokens)[i].is(Lexer::Token::Type::Comma) || (*tokens)[i].is(Lexer::Token::Type::End)) step.push_back((*tokens)[i]);
@@ -86,25 +86,36 @@ class Parser {
 
 		Reference resolveIf(vector<vector<Lexer::Token>>* inside, Scope scope) {
 			for (int i = 0; i < inside->size(); i += 2) if (resolve(&(*inside)[i], scope)->truthy()) return run(&(*inside)[i + 1], scope, false);
-			return Value::Empty();
+			return Value::Static::Void;
 		}
 
-		Reference call(Reference block) { return call(block, {}, current, true); }
-		Reference call(Reference block, ArrayValue values) { return call(block, values, current, true); }
-		Reference call(Reference block, ArrayValue values, Scope scope, bool branch=false) {
+		Reference call(Reference container) { return call(container, {}, current, true); }
+		Reference call(Reference container, ArrayValue values) { return call(container, values, current, true); }
+		Reference call(Reference container, ArrayValue values, Scope scope, bool branch=false) {
+			shared_ptr<Block> block = container->block;
+
+			// naive memoisation, works pretty well honestly
+
+			// string signature = "";
+			// for (int i = 0; i < values.size(); i++) signature += values[i]->describe() + "/";
+			// if (block->cache.count(signature)) return block->cache[signature];
+			
 			if (block->binding) return block->binding(values);
 			if (block->context) scope = block->context;
 			if (branch) scope = branched(scope);
 
 			for (int i = 0; i < block->arguments.size(); i++) {
 				if (i < values.size()) {
-					(*scope)[block->arguments[i].name] = Value::Copy(values[i]);
+					(*scope)[block->arguments[i].name] = values[i];
 				} else {
-					(*scope)[block->arguments[i].name] = block->arguments[i].initial.empty() ? Value::Empty() : resolve(&block->arguments[i].initial, scope);
+					(*scope)[block->arguments[i].name] = block->arguments[i].initial.empty() ? Value::Static::Void : resolve(&block->arguments[i].initial, scope);
 				}
 			}
 
-			return run(&block->inside[1], scope);
+			// Reference result = run(&block->body, scope);
+			// block->cache[signature] = result;
+
+			return run(&block->body, scope);
 		}
 
 		Reference resolve(vector<Lexer::Token>* tokens, Scope scope, int position=0, Reference target=nullptr) {
@@ -118,15 +129,13 @@ class Parser {
 
 			if (!target && left->is(Lexer::Token::Type::Word)) {
 				switch (left->symbol) {
-					case Lexer::Token::Symbol::Return:
-						returned = true;
-						return resolve(tokens, scope, position + 1);
+					case Lexer::Token::Symbol::Return: returned = true; return resolve(tokens, scope, position + 1);
 					case Lexer::Token::Symbol::True: target = Value::Make(true); break;
 					case Lexer::Token::Symbol::False: target = Value::Make(false); break;
 					case Lexer::Token::Symbol::Void: target = Value::Empty(); break;
 					default:
 						if (scope->count(left->contents)) target = (*scope)[left->contents];
-						if (environment->count(left->contents)) { target = (*environment)[left->contents]; }
+						if (environment->count(left->contents)) target = (*environment)[left->contents];
 				}
 			}
 
@@ -147,7 +156,7 @@ class Parser {
 
 			if (!target && left->is(Lexer::Token::Type::Call)) {
 				target = resolve(&left->inside[0], scope);
-				for (int i = 1; i < left->inside.size(); i++) target = Value::Copy(call(Value::Copy(target), resolveList(&left->inside[i], scope), scope, true));
+				for (int i = 1; i < left->inside.size(); i++) target = call(target, resolveList(&left->inside[i], scope), scope, true);
 			}
 
 			if (!target) {
@@ -221,12 +230,12 @@ class Parser {
 		Operation findOperator(string op, Reference left, Reference right) {
 			if (Operator::List[op].operations.count(left->type) && Operator::List[op].operations[left->type].count(right->type)) {
 				return Operator::List[op].operations[left->type][right->type];
-			} else if (Operator::List[op].operations.count(left->type) && Operator::List[op].operations[left->type].count(Any)) {
-				return Operator::List[op].operations[left->type][Any];
-			} else if (Operator::List[op].operations.count(Any) && Operator::List[op].operations[Any].count(right->type)) {
-				return Operator::List[op].operations[Any][right->type];
-			} else if (Operator::List[op].operations.count(Any) && Operator::List[op].operations[Any].count(Any)) {
-				return Operator::List[op].operations[Any][Any];
+			} else if (Operator::List[op].operations.count(left->type) && Operator::List[op].operations[left->type].count(Type::Any)) {
+				return Operator::List[op].operations[left->type][Type::Any];
+			} else if (Operator::List[op].operations.count(Type::Any) && Operator::List[op].operations[Type::Any].count(right->type)) {
+				return Operator::List[op].operations[Type::Any][right->type];
+			} else if (Operator::List[op].operations.count(Type::Any) && Operator::List[op].operations[Type::Any].count(Type::Any)) {
+				return Operator::List[op].operations[Type::Any][Type::Any];
 			}
 
 			return nullptr;
@@ -237,9 +246,10 @@ class Parser {
 
 			Reference result = Value::Empty();
 			vector<Lexer::Token> step = {};
-			
-			for (int i = 0; i <= (*tokens).size(); i++) {
-				if (i == (*tokens).size() || (*tokens)[i].is(Lexer::Token::Type::End)) {
+
+			int size = (*tokens).size();
+			for (int i = 0; i <= size; i++) {
+				if (i == size || (*tokens)[i].is(Lexer::Token::Type::End)) {
 					if (step.size() > 0) {
 						result = resolve(&step, scope); step.clear();
 						if (returned) { if (returns) returned = false; break; }

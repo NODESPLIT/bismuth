@@ -1,6 +1,6 @@
 namespace Math {
 	void Bind(Scope environment, Parser* parser) {
-		(*environment)["math"] = Value::Empty(Table);
+		(*environment)["math"] = Value::Empty(Type::Table);
 
 		(*environment)["math"]->set("e", Value::Make(M_E));
 		(*environment)["math"]->set("log2e", Value::Make(M_LOG2E));
@@ -38,7 +38,7 @@ namespace Math {
 		(*environment)["math"]->set("fmod", Value::Bound([](ArrayValue arguments) { return Value::Make(fmod(arguments[0]->as<NumberValue>(), arguments[1]->as<NumberValue>())); }));
 
 		(*environment)["math"]->set("frexp", Value::Bound([](ArrayValue arguments) {
-			Reference output = Value::Empty(Table);
+			Reference output = Value::Empty(Type::Table);
 			int exponent; Reference fraction = Value::Make(frexp(arguments[0]->as<NumberValue>(), &exponent));
 			output->set("fraction", fraction);
 			output->set("exponent", Value::Make(exponent));
@@ -46,7 +46,7 @@ namespace Math {
 		}));
 
 		(*environment)["math"]->set("modf", Value::Bound([](ArrayValue arguments) {
-			Reference output = Value::Empty(Table);
+			Reference output = Value::Empty(Type::Table);
 			NumberValue integer; Reference fraction = Value::Make(modf(arguments[0]->as<NumberValue>(), &integer));
 			output->set("fraction", fraction);
 			output->set("integer", Value::Make(integer));

@@ -404,7 +404,19 @@ namespace Lexer {
 			before = character;
 			character = position < script.size() ? script[position] : ' ';
 
-			if (!Gap && !comment) comment = before == '/' && character == '/' ? 1 : before == '/' && character == '*' ? 2 : 0;
+			if (!Gap && !comment) {
+				comment = before == '/' && character == '/' ? 1 : before == '/' && character == '*' ? 2 : 0;
+				if (comment) {
+					contents = "";
+					cued = Token::Type::None;
+					nesting = 0;
+					complete = false;
+					stay = false;
+					single = false;
+					// target->pop_back();
+				}
+			}
+
 			if (comment == 2 && before == '*' && character == '/') { comment = false; position++; continue; }
 			if (comment == 1 && character == '\n') comment = false;
 			if (comment) { position++; continue; }

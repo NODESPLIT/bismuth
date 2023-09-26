@@ -4,7 +4,7 @@ namespace Utilities {
 			[](ArrayValue arguments) {
 				for (int i = 0; i < arguments.size(); i++) {
 					cout << ( i == 0 ? "" : " " );
-					cout << ( arguments[i]->is(String) ? arguments[i]->as<string>() : arguments[i]->describe() );
+					cout << ( arguments[i]->is(Type::String) ? arguments[i]->as<string>() : arguments[i]->describe() );
 				}
 
 				cout << endl;
@@ -14,7 +14,7 @@ namespace Utilities {
 
 		(*environment)["plog"] = Value::Bound(
 			[](ArrayValue arguments) {
-				for (int i = 0; i < arguments.size(); i++) cout << ( arguments[i]->is(String) ? arguments[i]->as<string>() : arguments[i]->describe(0) ) << endl;
+				for (int i = 0; i < arguments.size(); i++) cout << ( arguments[i]->is(Type::String) ? arguments[i]->as<string>() : arguments[i]->describe(0) ) << endl;
 				return Value::Empty();
 			}
 		);

@@ -1,6 +1,7 @@
 Functionality:
 
 -4 Set up all standard operators
+	-4 Make better system for unary operators: right now - only works before a number (maybe just do this when I refactor parser)
 -3 |= operator to set a variable to a value only if its falsy
 -3 Calling string uses it as a format string with the arguments as the values
 -3 Work out cool ways inside operator could work
@@ -29,12 +30,14 @@ Optimisation:
 
 -4 Recursion seems to be creating endless loops (or really slow): could be scope shared pointer reaching limits of creation???
 -4 Detect when blocks are pure and cache their results against args in memory
+-3 Make more efficient inside operator (no output)
 +4 Change token type system to stop using string comparison (lmao)
 	this took recursive fib(20) down 250ms
 
 
 Bugs:
 
+-4 Fix comments adding extraneous operators from /
 +4 Number token is missing - before number in a few cases with tokens vector being random data sometimes
 +4 Recursion is throwing segfault
 

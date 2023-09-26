@@ -78,6 +78,7 @@ namespace Bismuth {
 
 	#include "operators.cpp"
 	#include "lexer.cpp"
+	#include "block.cpp"
 	#include "value.cpp"
 	#include "parser.cpp"
 	#include "operations.cpp"

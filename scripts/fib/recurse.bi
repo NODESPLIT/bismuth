@@ -3,7 +3,7 @@ fib = [ n ] {
 	fib( n - 1 ) + fib( n - 2 )
 }
 
-number = 29
+number = 46
 result = 0
 
 duration = time.while([]{ result = fib(number) })
