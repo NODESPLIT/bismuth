@@ -24,7 +24,10 @@ namespace Bismuth {
 	const vector<string> Extensions = { "bi", "bis" };
 	const string Index = "index";
 
-	namespace Log {
+	bool Verbose = false;
+
+	namespace Utils {
+		regex Flatten(R"(\s+)");
 		string Indent(int depth) {
 			string indentation = "";
 			for (int i = 0; i < depth; i++) indentation += "  ";
@@ -50,38 +53,31 @@ namespace Bismuth {
 			if (filesystem::is_directory(path)) return File(filesystem::path(path) / Index);
 			return "";
 		}
+	};
+
+	static bool Exists(string path) {
+		return !Search::Path(path).empty();
 	}
 
-	static bool Exists(string path) { return !Search::Path(path).empty(); }
-	static string Load(string path) {
-		ifstream stream = ifstream(path);
-		
-		if (!stream.good()) return "";
-		string script((istreambuf_iterator<char>(stream)), istreambuf_iterator<char>());
+	#include "grammar/mark.cpp"
+	#include "grammar/type.cpp"
+	#include "grammar/operators.cpp"
+	#include "grammar/task.cpp"
 
-		return script;
-	}
+	#include "lexing/token.cpp"
+	#include "lexing/scanning.cpp"
+	#include "lexing/analysis.cpp"
 
-	class Value;
-	class Parser;
+	#include "parsing/node.cpp"
+	#include "parsing/symbols.cpp"
+	#include "parsing/parser.cpp"
 
-	namespace Environment { void Bind(Parser* parser); }
-	typedef shared_ptr<Value> Reference;
+	#include "runtime/value.cpp"
+	#include "runtime/instruction.cpp"
+	#include "runtime/runtime.cpp"
+	#include "runtime/operators.cpp"
+	#include "runtime/machine.cpp"
 
-	typedef double NumberValue;
-	typedef vector<Reference> ArrayValue;
-	typedef unordered_map<string, Reference> TableValue;
-	typedef tuple<NumberValue, NumberValue> RangeValue;
-
-	typedef unordered_map<string, Reference> ScopeValue;
-	typedef shared_ptr<ScopeValue> Scope;
-
-	#include "operators.cpp"
-	#include "lexer.cpp"
-	#include "block.cpp"
-	#include "value.cpp"
-	#include "parser.cpp"
-	#include "operations.cpp"
-	#include "environment.cpp"
-	#include "repl.cpp"
+	#include "system/bindings.cpp"
+	#include "system/repl.cpp"
 }

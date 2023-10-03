@@ -1,7 +1,7 @@
 Functionality:
 
 -4 Set up all standard operators
-	-4 Make better system for unary operators: right now - only works before a number (maybe just do this when I refactor parser)
+	+4 Make better system for unary operators: right now - only works before a number (maybe just do this when I refactor parser)
 -3 |= operator to set a variable to a value only if its falsy
 -3 Calling string uses it as a format string with the arguments as the values
 -3 Work out cool ways inside operator could work

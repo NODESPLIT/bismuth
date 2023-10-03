@@ -2,7 +2,7 @@ class Repl {
 	public:
 		static constexpr char* Prompt = "$>";
 		
-		Parser parser;
+		Runtime runtime;
 		WINDOW* window;
 
 		string command;
@@ -14,7 +14,7 @@ class Repl {
 		bool running = true;
 
 		Repl() {
-			parser = Parser();
+			runtime = Runtime();
 			
 			initscr();
 			setlocale(LC_ALL, "");
@@ -38,7 +38,7 @@ class Repl {
 
 		void execute() {
 			if (command.compare("exit") == 0) { running = false; return; }
-			print(""); Reference result = parser.run(command, false);
+			print(""); Reference result = runtime.interpret(command);
 			int x, y; getyx(window, y, x); wmove(window, y, 0);
 			print("=> " + result->describe(0));
 		}

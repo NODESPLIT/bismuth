@@ -25,16 +25,16 @@ int main(int argc, char *argv[]) {
 
 	bool repl = flags["-r"] || flags["--repl"];
 	bool quiet = flags["-q"] || flags["--quiet"];
-	bool verbose = flags["-v"] || flags["--verbose"];
+	Bismuth::Verbose = flags["-v"] || flags["--verbose"];
 
 	if (repl || ( args.size() <= 1 && !Bismuth::Exists(path) )) {
 		Bismuth::Repl();
 	} else {
 		if (Bismuth::Exists(path)) {
-			Bismuth::Parser parser = Bismuth::Parser(path, verbose);
-			if (!quiet && !verbose) cout << parser.result->describe() << endl;
+			Bismuth::Runtime runtime = Bismuth::Runtime(path);
+			if (!quiet && !Bismuth::Verbose) cout << runtime.result->describe() << endl;
 		} else {
-			cout << "File '" << path << "' not found" << endl;
+			cout << "Bismuth '" << path << "' not found" << endl;
 		}
 	}
 
