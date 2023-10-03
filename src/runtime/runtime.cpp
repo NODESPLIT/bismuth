@@ -169,14 +169,14 @@ class Runtime {
 
 			for (int i = 0; i < block->arguments.size(); i++) {
 				if (i < values.size()) {
-					(*current)[block->arguments[i]] = values[i];
+					(*current)[block->arguments[i]] = Value::Copy(values[i]);
 				} else {
 					Reference defaulting = resolve(&block->defaults[i]);
-					(*current)[block->arguments[i]] = defaulting;
+					(*current)[block->arguments[i]] = Value::Copy(defaulting);
 				}
 			}
 
-			Reference result = resolve(block->body, branch);
+			Reference result = Value::Copy(resolve(block->body, branch));
 			Pop();
 
 			return result;

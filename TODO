@@ -37,6 +37,7 @@ Optimisation:
 
 Bugs:
 
+-4 Segfault when importing in repl
 -4 Fix comments adding extraneous operators from /
 +4 Number token is missing - before number in a few cases with tokens vector being random data sometimes
 +4 Recursion is throwing segfault

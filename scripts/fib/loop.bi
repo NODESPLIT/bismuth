@@ -3,15 +3,15 @@ fib = [ n ] {
   two = 1
   next = one
 
-  n : [] {
+  n : [i] {
     next = one + two
     one = two
     two = next
   }
 }
 
-number = 4000
+number = 46
 result = 0
 
-duration = time.while([]{ result = fib(number, 0) })
+duration = time.while([]{ result = fib(number) })
 'loop fib(' + number + '): ' + result + ' ( duration: ' + duration + 'ms )'

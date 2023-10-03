@@ -232,7 +232,7 @@ class Value {
 		bool immutable = false;
 		Type type = Type::Void;
 		shared_ptr<Block> block;
-		any value = false;
+		any value;
 };
 
 Reference Block::Bound(function<Reference(Array)> binding) { return Value::Locked(make_shared<Block>(binding)); }
