@@ -4,6 +4,7 @@ Functionality:
 	+4 Make better system for unary operators: right now - only works before a number (maybe just do this when I refactor parser)
 -3 |= operator to set a variable to a value only if its falsy
 -3 Calling string uses it as a format string with the arguments as the values
+-3 Tagged string literal like javascript function`content` to allow for interpretation of strings
 -3 Work out cool ways inside operator could work
 -3 Add reduce operator like colon but takes initial value and reduces with it: maybe just use inside with parameters for this instead
 -3 Build solid standard library with:
@@ -29,10 +30,10 @@ Functionality:
 Optimisation:
 
 -4 Make VM use proper stack for referencing its own instructions instead of method to call with pointer
--4 Make operator matrix ( operator * type * type ) prior to interpretation to access operator functions without looking in maps
--4 Recursion seems to be creating endless loops (or really slow): could be scope shared pointer reaching limits of creation???
 -4 Detect when blocks are pure and cache their results against args in memory
 -3 Make more efficient inside operator (no output)
++4 Recursion seems to be creating endless loops (or really slow): could be scope shared pointer reaching limits of creation???
++4 Make operator matrix ( operator * type * type ) prior to interpretation to access operator functions without looking in maps
 +4 Change token type system to stop using string comparison (lmao)
 	this took recursive fib(20) down 250ms
 

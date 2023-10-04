@@ -61,9 +61,8 @@ class Runtime {
 		}
 
 		Scope branched(Scope origin=nullptr) {
-			Scope scope = Scope(new Table());
-			if (origin) for (const auto& [ name, variable ] : *origin) (*scope)[name] = variable;
-			return scope;
+			if (origin) return boost::make_shared<Table>(*origin);
+			return Scope(new Table());
 		}
 
 		Runtime() {

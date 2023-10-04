@@ -16,6 +16,7 @@
 
 #include <boost/any.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 
 template <class L, class R> using unordered_map = boost::unordered_map<L, R>;
 template <class L, class R> using map = boost::container::map<L, R>;
