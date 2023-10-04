@@ -1,6 +1,5 @@
 enum class Task {
-	Instruct,
-	Literal,
+	Value,
 	Array,
 	Table,
 	Block,
@@ -17,8 +16,7 @@ enum class Task {
 
 namespace Names {
 	unordered_map<Task, string> Task = {
-		{ Task::Instruct, "Instruct" },
-		{ Task::Literal, "Literal" },
+		{ Task::Value, "Value" },
 		{ Task::Array, "Array" },
 		{ Task::Table, "Table" },
 		{ Task::Block, "Block" },

@@ -6,6 +6,9 @@ class Instruction {
 		Instruction(Runtime* runtime, Node* node);
 		string describe(Runtime* runtime);
 
-		Task task; int index = -1;
+		Reference (*wire)(Instruction*);
+		Reference resolve();
+
+		int index = -1;
 		vector<Instruction> children;
 };

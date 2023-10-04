@@ -51,7 +51,7 @@ class Repl {
 		}
 
 		void move(int to) {
-			cursor = max(0, min(int(command.size()), cursor + to));
+			cursor = std::max(0, std::min(int(command.size()), cursor + to));
 		}
 
 		void fresh() { wprintw(window, "\n"); wrefresh(window); }

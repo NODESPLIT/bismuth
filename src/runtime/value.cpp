@@ -34,13 +34,13 @@ class Block {
 
 class Value {
 	public:
-		template <class T> static Reference Make(T one) { return make_shared<Value>(one); }
-		template <class T1, class T2> static Reference Make(T1 one, T2 two) { return make_shared<Value>(one, two); }
+		template <class T> static Reference Make(T one) { return Reference(new Value(one)); }
+		template <class T1, class T2> static Reference Make(T1 one, T2 two) { return Reference(new Value(one, two)); }
 
 		static Reference Lock(Reference value) { value->immutable = true; return value; }
 		static Reference Copy(Reference from) { Reference copy = Empty(); copy->SET(from); return copy; }
 
-		static Reference Empty() { return make_shared<Value>(); }
+		static Reference Empty() { return Reference(new Value()); }
 		static Reference Empty(Type type) {
 			if (type == Type::Array) {
 				return Make(Array{});
@@ -62,7 +62,7 @@ class Value {
 		Value(int number) { type = Type::Number; value = Number(number); }
 		Value(float number) { type = Type::Number; value = Number(number); }
 		Value(Number number) { type = Type::Number; value = number; }
-		Value(Number from, Number to) { type = Type::Range; value = Range{ from, to }; }
+		Value(Number from, Number to) { type = Type::Range; value = make_tuple(from, to); }
 		Value(String string) { type = Type::String; value = string; }
 		Value(Array array) { type = Type::Array; value = array; }
 		Value(Table table) { type = Type::Table; value = table; }
@@ -93,7 +93,7 @@ class Value {
 				value = array;
 			} else if (node->mark == Mark::Block) {
 				type = Type::Block;
-				block = make_shared<Block>();
+				block = shared_ptr<Block>(new Block());
 			}
 		}
 
@@ -199,7 +199,7 @@ class Value {
 				return before + describe(as<Number>());
 			} else if (is(Type::Range)) {
 				Range value = as<Range>();
-				return before + "( " + describe(std::get<0>(value)) + " -> " + describe(std::get<1>(value)) + " )";
+				return before + "( " + describe(value.get<0>()) + " -> " + describe(value.get<1>()) + " )";
 			} else if (is(Type::String)) {
 				return before + "'" + as<String>() + "'";
 			} else if (is(Type::Array)) {
@@ -235,4 +235,4 @@ class Value {
 		any value;
 };
 
-Reference Block::Bound(function<Reference(Array)> binding) { return Value::Locked(make_shared<Block>(binding)); }
+Reference Block::Bound(function<Reference(Array)> binding) { return Value::Locked(shared_ptr<Block>(new Block(binding))); }

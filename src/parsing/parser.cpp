@@ -33,7 +33,7 @@ void Branch(vector<Token>* tokens, vector<Node>* target, int position, Node* lef
 			if (left->is(Mark::Brackets)) {
 				Branch(&left->children[0], target);
 			} else if (left->is(vector<Mark>{ Mark::Number, Mark::String })) {
-				target->push_back(Node{ Task::Literal, left });
+				target->push_back(Node{ Task::Value, left });
 			} else if (left->is(Mark::Array)) {
 				Node node = Node{ Task::Array, left };
 				BranchList(&left->children[0], &node.children);
@@ -55,7 +55,7 @@ void Branch(vector<Token>* tokens, vector<Node>* target, int position, Node* lef
 				target->push_back(node);
 			} else if (left->is(Mark::Block)) {
 				Node node = Node{ Task::Block, left };
-				Node arguments = Node{ Task::Literal };
+				Node arguments = Node{ Task::Value };
 
 				Token argument;
 				vector<Token> defaults;
@@ -108,10 +108,13 @@ void Branch(vector<Token>* tokens, vector<Node>* target, int position, Node* lef
 				for (int i = 0; i < left->children.size(); i += 2) {
 					vector<Token> question = left->children[i];
 					if (question.empty()) question = { Token(Mark::Word, "true") };
+
 					vector<Token> answer = left->children[i + 1];
 					Parse(&question, &node.children);
-					Node resolution = Node{ Task::Instruct, left->contents };
+
+					Node resolution = Node{ Task::Array, left->contents };
 					Parse(&answer, &resolution.children);
+					
 					node.children.push_back(resolution);
 				}
 

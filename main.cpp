@@ -1,8 +1,3 @@
-#include <string>
-#include <vector>
-
-using namespace std;
-
 #include "src/bismuth.cpp"
 
 int main(int argc, char *argv[]) {

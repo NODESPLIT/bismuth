@@ -1,21 +1,42 @@
+#include <ncurses.h>
 #include <algorithm>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <fstream>
 #include <streambuf>
-#include <memory>
 #include <regex>
-#include <vector>
-#include <unordered_map>
-#include <map>
-#include <any>
 
-#include <ncurses.h>
-#include <sstream>
-#include <string>
-#include <vector>
+#include <boost/container/map.hpp>
+#include <boost/unordered_map.hpp>
+#include <boost/container/vector.hpp>
 
-using namespace std;
+#include <boost/tuple/tuple.hpp>
+#include <boost/tuple/tuple_comparison.hpp>
+
+#include <boost/any.hpp>
+#include <boost/shared_ptr.hpp>
+
+template <class L, class R> using unordered_map = boost::unordered_map<L, R>;
+template <class L, class R> using map = boost::container::map<L, R>;
+template <class T> using vector = boost::container::vector<T>;
+template <class L, class R> using tuple = boost::tuple<L, R>;
+
+using namespace std::filesystem;
+
+using std::function;
+using std::string;
+using std::stringstream;
+using std::numeric_limits;
+using std::istreambuf_iterator;
+using std::ifstream;
+using std::regex;
+using std::cout;
+using std::endl;
+
+using boost::shared_ptr;
+using boost::make_tuple;
+using boost::any;
 
 namespace Bismuth {
 	const string Name = "bismuth";
@@ -37,11 +58,11 @@ namespace Bismuth {
 
 	namespace Search {
 		static string File(string path) {
-			if (filesystem::is_regular_file(path)) return path;
+			if (std::filesystem::is_regular_file(path)) return path;
 
 			for (int i = 0; i < Extensions.size(); i++) {
 				path = path + "." + Extensions[i];
-				if (filesystem::is_regular_file(path)) return path;
+				if (std::filesystem::is_regular_file(path)) return path;
 			}
 
 			return "";
@@ -50,7 +71,7 @@ namespace Bismuth {
 		static string Path(string path) {
 			string found = File(path);
 			if (!found.empty()) return found;
-			if (filesystem::is_directory(path)) return File(filesystem::path(path) / Index);
+			if (std::filesystem::is_directory(path)) return File(std::filesystem::path(path) / Index);
 			return "";
 		}
 	};

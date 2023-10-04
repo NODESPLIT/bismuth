@@ -27,3 +27,10 @@ deploy:
 install:
 	rm /usr/local/bin/bismuth
 	cp bismuth /usr/local/bin/bismuth
+
+bench:
+	/usr/bin/time -l -h -p ./bismuth scripts/bench/fib
+
+tune:
+	make build
+	make bench

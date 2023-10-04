@@ -28,6 +28,8 @@ Functionality:
 
 Optimisation:
 
+-4 Make VM use proper stack for referencing its own instructions instead of method to call with pointer
+-4 Make operator matrix ( operator * type * type ) prior to interpretation to access operator functions without looking in maps
 -4 Recursion seems to be creating endless loops (or really slow): could be scope shared pointer reaching limits of creation???
 -4 Detect when blocks are pure and cache their results against args in memory
 -3 Make more efficient inside operator (no output)

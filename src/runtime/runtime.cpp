@@ -1,7 +1,29 @@
-typedef function<Reference(Runtime*, Reference, Reference)> Transform;
+typedef function<Reference(Reference, Reference)> Transform;
 typedef unordered_map<Type, unordered_map<Type, Transform>> Transforms;
 
 namespace Bindings { void Bind(Runtime* runtime); }
+
+namespace Machine {
+	Reference VALUE(Instruction* instruction);
+	Reference ARRAY(Instruction* instruction);
+	Reference TABLE(Instruction* instruction);
+	Reference BLOCK(Instruction* instruction);
+	Reference READ(Instruction* instruction);
+	Reference INSIDE(Instruction* instruction);
+	Reference DEFINE(Instruction* instruction);
+	Reference OPERATE(Instruction* instruction);
+	Reference DECIDE(Instruction* instruction);
+	Reference CALL(Instruction* instruction);
+	Reference RETURN(Instruction* instruction);
+	extern unordered_map<Task, Reference (*)(Instruction*)> Wiring;
+	extern unordered_map<Reference (*)(Instruction*), Task> Tasks;
+}
+
+namespace Names {
+	extern unordered_map<Reference (*)(Instruction*), string> Wiring;
+}
+
+Runtime* Instance;
 
 class Runtime {
 	public:
@@ -17,15 +39,15 @@ class Runtime {
 		vector<string> words;
 		vector<Reference> literals;
 
-		Scope environment = make_shared<Table>();
-		Scope global = make_shared<Table>();
+		Scope environment = Scope(new Table());
+		Scope global = Scope(new Table());
 
 		vector<Scope> origin;
 		Scope current = global;
 
 		void Push(Scope scope) {
 			origin.push_back(current);
-			current = scope ? scope : make_shared<Table>();
+			current = scope ? scope : Scope(new Table());
 		}
 
 		void Pop() {
@@ -34,13 +56,12 @@ class Runtime {
 		}
 
 		void setup(Scope scope, string path="./", Reference in=nullptr) {
-			(*scope)["@"] = Value::Locked(Type::Table);
-			(*scope)["@"]->SET("path", Value::Lock(Value::Make(path)));
-			(*scope)["@"]->SET("in", in ? Value::Lock(Value::Copy(in)) : Value::Empty());
+			(*scope)["@path"] = Value::Lock(Value::Make(path));
+			(*scope)["@in"] = in ? Value::Lock(Value::Copy(in)) : Value::Empty();
 		}
 
 		Scope branched(Scope origin=nullptr) {
-			Scope scope = make_shared<Table>();
+			Scope scope = Scope(new Table());
 			if (origin) for (const auto& [ name, variable ] : *origin) (*scope)[name] = variable;
 			return scope;
 		}
@@ -81,7 +102,7 @@ class Runtime {
 
 		Reference import(string path, Reference in=nullptr) {
 			Scope subscope = branched();
-			filesystem::path base((*current)["@"]->get("path")->as<string>()); base.remove_filename();
+			std::filesystem::path base((*current)["@"]->get("path")->as<string>()); base.remove_filename();
 			return load(base / path, in, subscope);
 		}
 
@@ -118,7 +139,8 @@ class Runtime {
 				Instruction::Log(this, &instructions);
 			}
 
-			Reference result = resolve(instructions);
+			Instance = this;
+			Reference result = resolve(&instructions);
 			
 			if (Bismuth::Verbose) {
 				cout << "\n\n--- Result ---\n" << endl;
@@ -131,35 +153,17 @@ class Runtime {
 			return result;
 		}
 
-		Reference resolve(vector<Instruction> instructions, bool returns=false) {
+		Reference resolve(vector<Instruction>* instructions, bool returns=false) {
 			Reference result = Value::Empty();
 			
-			for (int i = 0; i < instructions.size(); i++) {
-				result = resolve(&instructions[i]);
+			for (int i = 0; i < instructions->size(); i++) {
+				result = (*instructions)[i].resolve();
 				if (returned) { if (returns) returned = false; break; }
 			}
 
 			return result;
 		}
 
-		Reference resolve(Instruction* instruction) {
-			switch(instruction->task) {
-				case Task::Instruct: return Instruct(instruction);
-				case Task::Literal: return Literal(instruction);
-				case Task::Array: return LiteralArray(instruction);
-				case Task::Table: return LiteralTable(instruction);
-				case Task::Block: return LiteralBlock(instruction);
-				case Task::Read: return Read(instruction);
-				case Task::Inside: return Inside(instruction);
-				case Task::Define: return Define(instruction);
-				case Task::Operate: return Operate(instruction);
-				case Task::Decide: return Decide(instruction);
-				case Task::Call: return Call(instruction);
-				case Task::Return: return Return(instruction);
-				default: return Value::Empty();
-			}
-		}
-		
 		Reference call(Reference value, bool branch=true) { return call(value, {}, branch); }
 		Reference call(Reference value, Array values, bool branch=true) {
 			shared_ptr<Block> block = value->block;
@@ -171,47 +175,34 @@ class Runtime {
 				if (i < values.size()) {
 					(*current)[block->arguments[i]] = Value::Copy(values[i]);
 				} else {
-					Reference defaulting = resolve(&block->defaults[i]);
+					Reference defaulting = block->defaults[i].resolve();
 					(*current)[block->arguments[i]] = Value::Copy(defaulting);
 				}
 			}
 
-			Reference result = Value::Copy(resolve(block->body, branch));
+			Reference result = Value::Copy(resolve(&block->body, branch));
 			Pop();
 
 			return result;
 		}
-
-		Reference Instruct(Instruction* instruction);
-		Reference Literal(Instruction* instruction);
-		Reference LiteralArray(Instruction* instruction);
-		Reference LiteralTable(Instruction* instruction);
-		Reference LiteralBlock(Instruction* instruction);
-		Reference Read(Instruction* instruction);
-		Reference Inside(Instruction* instruction);
-		Reference Define(Instruction* instruction);
-		Reference Operate(Instruction* instruction);
-		Reference Decide(Instruction* instruction);
-		Reference Call(Instruction* instruction);
-		Reference Return(Instruction* instruction);
 };
 
-namespace Operate { extern unordered_map<string, int> Reduced; }
+namespace Operate { extern unordered_map<string, int> Reduced; extern int Pairs; }
 namespace Names { extern vector<string> Operators; }
 
 void Instruction::Log(Runtime* runtime, vector<Instruction>* instructions, int depth) {
 	for (auto &instruction : *instructions) {
 		cout << Utils::Indent(depth);
 		cout << instruction.describe(runtime) << endl;
-		if (instruction.task == Task::End) cout << endl;
+		if (!instruction.wire) cout << endl;
 		Log(runtime, &instruction.children, depth + 1);
 	}
 }
 
 Instruction::Instruction(Runtime* runtime, Node* node) {
-	task = node->task;
+	Task task = node->task;
 	
-	if (task == Task::Literal || task == Task::Block) {
+	if (task == Task::Value || task == Task::Array || task == Task::Table || task == Task::Block) {
 		runtime->literals.push_back(Value::Make(node));
 		index = runtime->literals.size() - 1;
 	} else if (task == Task::Read) {
@@ -222,6 +213,8 @@ Instruction::Instruction(Runtime* runtime, Node* node) {
 	} else if (task == Task::Operate) {
 		if (Operate::Reduced.count(node->contents)) index = Operate::Reduced[node->contents];
 	}
+
+	wire = task == Task::End ? nullptr : Machine::Wiring[task];
 
 	for (int i = 0; i < node->children.size(); i++) {
 		if (task == Task::Block) {
@@ -239,10 +232,13 @@ Instruction::Instruction(Runtime* runtime, Node* node) {
 	}
 }
 
+Reference Instruction::resolve() { return wire(this); }
+
 string Instruction::describe(Runtime* runtime) {
-	string description = "<" + Names::Task[task] + ">";
-	if (task == Task::Literal && index > -1 && index < runtime->literals.size()) description += ": " + regex_replace(runtime->literals[index]->describe(), Utils::Flatten, " ");
+	Task task = Machine::Tasks[wire];
+	string description = "<" + ( wire ? Names::Wiring[wire] : "End" ) + ">";
+	if (( task == Task::Value || task == Task::Array || task == Task::Table ) && index > -1 && index < runtime->literals.size()) description += ": " + regex_replace(runtime->literals[index]->describe(), Utils::Flatten, " ");
 	if (task == Task::Read && index > -1 && index < runtime->words.size()) description += ": " + runtime->words[index];
-	if (task == Task::Operate && index > -1 && index < Names::Operators.size()) description += ": " + Names::Operators[index];
+	if (task == Task::Operate && index > -1 && ( index / Operate::Pairs ) < Names::Operators.size()) description += ": " + Names::Operators[index / Operate::Pairs];
 	return description;
 }

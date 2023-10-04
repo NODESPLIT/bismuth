@@ -1,5 +1,4 @@
 enum class Type {
-	Any,
 	Void,
 	Boolean,
 	Number,
@@ -8,11 +7,11 @@ enum class Type {
 	Array,
 	Table,
 	Block,
+	Any
 };
 
 namespace Names {
 	unordered_map<Type, string> Types = {
-		{ Type::Any, "Any" },
 		{ Type::Void, "Void" },
 		{ Type::Boolean, "Boolean" },
 		{ Type::Number, "Number" },
@@ -20,6 +19,7 @@ namespace Names {
 		{ Type::String, "String" },
 		{ Type::Array, "Array" },
 		{ Type::Table, "Table" },
-		{ Type::Block, "Block" }
+		{ Type::Block, "Block" },
+		{ Type::Any, "Any" }
 	};
 }
