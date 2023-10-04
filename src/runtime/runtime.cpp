@@ -187,7 +187,7 @@ class Runtime {
 };
 
 namespace Operate { extern unordered_map<string, int> Reduced; extern int Pairs; }
-namespace Names { extern vector<string> Operators; }
+namespace Names { extern unordered_map<int, string> Operators; }
 
 void Instruction::Log(Runtime* runtime, vector<Instruction>* instructions, int depth) {
 	for (auto &instruction : *instructions) {
@@ -238,6 +238,6 @@ string Instruction::describe(Runtime* runtime) {
 	string description = "<" + ( wire ? Names::Wiring[wire] : "End" ) + ">";
 	if (( task == Task::Value || task == Task::Array || task == Task::Table ) && index > -1 && index < runtime->literals.size()) description += ": " + regex_replace(runtime->literals[index]->describe(), Utils::Flatten, " ");
 	if (task == Task::Read && index > -1 && index < runtime->words.size()) description += ": " + runtime->words[index];
-	if (task == Task::Operate && index > -1 && ( index / Operate::Pairs ) < Names::Operators.size()) description += ": " + Names::Operators[index / Operate::Pairs];
+	if (task == Task::Operate && Names::Operators.count(index)) description += ": " + Names::Operators[index];
 	return description;
 }

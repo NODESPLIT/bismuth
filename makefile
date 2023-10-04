@@ -1,5 +1,9 @@
+assemble:
+	python3 assemble.py
+
 build:
 	rm -rf ./bismuth
+	make assemble
 	g++ -std=c++20 $(options) main.cpp -o bismuth -lncurses
 
 fresh:

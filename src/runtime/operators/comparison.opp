@@ -1,0 +1,17 @@
+[ < ]
+( Number, Number ) :{ return Value::Make(left->as<Number>() < right->as<Number>()); }:
+
+[ <= ]
+( Number, Number ) :{ return Value::Make(left->as<Number>() <= right->as<Number>()); }:
+
+[ > ]
+( Number, Number ) :{ return Value::Make(left->as<Number>() > right->as<Number>()); }:
+
+[ >= ]
+( Number, Number ) :{ return Value::Make(left->as<Number>() >= right->as<Number>()); }:
+
+[ == ]
+( Any, Any ) :{ return Value::Make(left->equals(right)); }:
+
+[ != ]
+( Any, Any ) :{ return Value::Make(!left->equals(right)); }:

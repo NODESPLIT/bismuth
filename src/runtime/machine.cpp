@@ -44,7 +44,7 @@ namespace Machine {
 	Reference OPERATE(Instruction* instruction) {
 		Reference left = instruction->children[0].resolve();
 		Reference right = instruction->children[1].resolve();
-		return Operate::List[ instruction->index + ( ( int(left->type) * Operate::Types ) + int(right->type) ) ](left, right);
+		return Operate::List[ instruction->index + ( ( int(left->type) * Operate::Count ) + int(right->type) ) ](left, right);
 	}
 
 	Reference DECIDE(Instruction* instruction) {

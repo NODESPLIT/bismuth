@@ -1,0 +1,66 @@
+[ -> ]
+( Number, Number ) :{ return Value::Make(left->as<Number>(), right->as<Number>()); }:
+
+[ : ]
+
+( Number, Block ) :{
+	Number amount = left->as<Number>();
+
+	Array output;
+	if (amount >= 0) {
+		for (int i = 0; i < amount; i++) output.push_back(Instance->call(right, { Value::Make(i) }, false));
+	} else {
+		for (int i = amount + 1; i >= 0; i--) output.push_back(Instance->call(right, { Value::Make(i) }, false));
+	}
+
+	return Value::Make(output);
+}:
+
+( Range, Block ) :{
+	Range range = left->as<Range>();
+
+	Number from = get<0>(range);
+	Number to = get<1>(range);
+	
+	Array output;
+	if (from <= to) {
+		for (int i = from; i <= to; i++) output.push_back(Instance->call(right, { Value::Make(i) }, false));
+	} else {
+		for (int i = from; i >= to; i--) output.push_back(Instance->call(right, { Value::Make(i) }, false));
+	}
+
+	return Value::Make(output);
+}:
+
+( Array, Block ) :{
+	Array array = left->as<Array>();
+
+	Array output;
+	for (int i = 0; i < array.size(); i++) {
+		output.push_back(Instance->call(right, { array[i], Value::Make(i) }, false));
+	}
+
+	return Value::Make(output);
+}:
+
+( Table, Block ) :{
+	Table table = left->as<Table>();
+	
+	Table output;
+	for (const auto& [ name, variable ] : table) output[name] = Instance->call(right, { variable, Value::Make(name) }, false);
+
+	return Value::Make(output);
+}:
+
+( String, Block ) :{
+	String value = left->as<String>();
+	
+	String output = "";
+	for (int i = 0; i < value.size(); i++) {
+		String character({ value.at(i) });
+		Reference result = Instance->call(right, { Value::Make(character), Value::Make(i) }, false);
+		if (result->is(Type::String)) output += result->as<String>();
+	}
+
+	return Value::Make(output);
+}:

@@ -1,0 +1,48 @@
+[ + ]
+( Number, Number ) :{ return Value::Make(left->as<Number>() + right->as<Number>()); }:
+( Number, String ) :{ return Value::Make(left->describe() + right->as<String>()); }:
+( String, String ) :{ return Value::Make(left->as<String>() + right->as<String>()); }:
+( String, Any ) :{ return Value::Make(left->as<String>() + right->describe()); }:
+( Any, String ) :{ return Value::Make(left->describe() + right->as<String>()); }:
+( Any, Any ) :{ return Value::Make(left->describe() + right->describe()); }:
+
+[ - ]
+( Number, Number ) :{ return Value::Make(left->as<Number>() - right->as<Number>()); }:
+
+[ * ]
+( Number, Number ) :{ return Value::Make(left->as<Number>() * right->as<Number>()); }:
+
+[ / ]
+( Number, Number ) :{ return Value::Make(left->as<Number>() / right->as<Number>()); }:
+
+[ % ]
+( Number, Number ) :{ return Value::Make(fmod(left->as<Number>(), right->as<Number>())); }:
+
+[ -_ ]
+( Number, Any ) :{ return Value::Make(-left->as<Number>()); }:
+
+[ _++ ]
+( Number, Any ) :{
+	Reference origin = Value::Make(left->as<Number>());
+	left->set(Value::Make(left->as<Number>() + 1));
+	return origin;
+}:
+
+[ _-- ]
+( Number, Any ) :{
+	Reference origin = Value::Make(left->as<Number>());
+	left->set(Value::Make(left->as<Number>() - 1));
+	return origin;
+}:
+
+[ ++_ ]
+( Number, Any ) :{
+	left->set(Value::Make(left->as<Number>() + 1));
+	return left;
+}:
+
+[ --_ ]
+( Number, Any ) :{
+	left->set(Value::Make(left->as<Number>() - 1));
+	return left;
+}:
