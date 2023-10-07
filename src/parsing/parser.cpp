@@ -45,7 +45,12 @@ void Branch(vector<Token>* tokens, vector<Node>* target, int position, Node* lef
 				bool defining = false;
 				for (int i = 0; i <= left->children[0].size(); i++) {
 					if (i == left->children[0].size() || ( defining ? left->children[0][i].is(Mark::Comma) : left->children[0][i].is(Mark::Operator, ":") ) || left->children[0][i].is(Mark::End)) {
-						Branch(&part, &node.children);
+						if (defining) {
+							Branch(&part, &node.children);
+						} else if (part.size() > 0) {
+							vector<Token> name = { Token{ Mark::String, part[part.size() - 1].contents } };
+							Branch(&name, &node.children);
+						}
 						part.clear(); defining = !defining;
 					} else {
 						part.push_back(left->children[0][i]);

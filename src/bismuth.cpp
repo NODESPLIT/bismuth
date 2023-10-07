@@ -7,6 +7,8 @@
 #include <streambuf>
 #include <regex>
 
+#include <stack>
+
 #include <boost/container/map.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/container/vector.hpp>
@@ -25,6 +27,7 @@ template <class L, class R> using tuple = boost::tuple<L, R>;
 
 using namespace std::filesystem;
 
+using std::stack;
 using std::function;
 using std::string;
 using std::stringstream;
@@ -97,6 +100,7 @@ namespace Bismuth {
 	#include "runtime/value.cpp"
 	#include "runtime/instruction.cpp"
 	#include "runtime/runtime.cpp"
+	#include "runtime/compilation.cpp"
 	#include "runtime/operators.cpp"
 	#include "runtime/machine.cpp"
 

@@ -11,6 +11,7 @@ enum class Task {
 	Match,
 	Call,
 	Return,
+	Jump,
 	End
 };
 
@@ -28,6 +29,7 @@ namespace Names {
 		{ Task::Match, "Match" },
 		{ Task::Call, "Call" },
 		{ Task::Return, "Return" },
+		{ Task::Jump, "Jump" },
 		{ Task::End, "End" }
 	};
 };

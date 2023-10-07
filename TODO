@@ -1,7 +1,9 @@
 Functionality:
 
 -4 Set up all standard operators
+	-2 Binary operators
 	+4 Make better system for unary operators: right now - only works before a number (maybe just do this when I refactor parser)
+-3 Potentially rewrite compilation to assemble a list of instructions with uuids instead of real registers then walk the list to insert real registers
 -3 |= operator to set a variable to a value only if its falsy
 -3 Calling string uses it as a format string with the arguments as the values
 -3 Tagged string literal like javascript function`content` to allow for interpretation of strings
@@ -29,13 +31,14 @@ Functionality:
 
 Optimisation:
 
--4 Make VM use proper stack for referencing its own instructions instead of method to call with pointer
+-4 Make variables sit on a vector or array instead of a map<string, Reference> and separate naming, use indexes everywhere else
 -4 Detect when blocks are pure and cache their results against args in memory
 -3 Make more efficient inside operator (no output)
 +4 Recursion seems to be creating endless loops (or really slow): could be scope shared pointer reaching limits of creation???
 +4 Make operator matrix ( operator * type * type ) prior to interpretation to access operator functions without looking in maps
 +4 Change token type system to stop using string comparison (lmao)
 	this took recursive fib(20) down 250ms
++4 Make VM use proper stack for referencing its own instructions instead of method to call with pointer
 
 
 Bugs:

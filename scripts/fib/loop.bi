@@ -10,7 +10,7 @@ fib = [ n ] {
   }
 }
 
-number = 46
+number = 300
 result = 0
 
 duration = time.while([]{ result = fib(number) })

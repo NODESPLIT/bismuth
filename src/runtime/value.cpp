@@ -16,7 +16,7 @@ class Block {
 		Scope context;
 
 		vector<string> arguments;
-		vector<Instruction> defaults;
+		vector<vector<Instruction>> defaults;
 		vector<Instruction> body;
 
 		function<Reference(Array)> binding = nullptr;
@@ -25,7 +25,7 @@ class Block {
 
 		Block(){}
 		Block(function<Reference(Array)> binding){ this->binding = binding; }
-		Block(vector<string> arguments, vector<Instruction> defaults, vector<Instruction> body) {
+		Block(vector<string> arguments, vector<vector<Instruction>> defaults, vector<Instruction> body) {
 			this->arguments = arguments;
 			this->defaults = defaults;
 			this->body = body;
@@ -106,7 +106,7 @@ class Value {
 
 		Reference get(Reference index) {
 			switch (type) {
-				case Type::Array: return as<Array&>()[index->as<Number>()];
+				case Type::Array: return as<Array&>()[index->is(Type::String) ? std::stoi(index->as<String>()) : index->as<Number>()];
 				case Type::Table: return as<Table&>()[index->as<String>()];
 				default: return Empty();
 			}

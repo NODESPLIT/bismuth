@@ -1,0 +1,145 @@
+namespace Machine {
+	void Log(Runtime* runtime, vector<Instruction>* instructions) {
+		for (int i = 0; i < instructions->size(); i++) {
+			Instruction* instruction = &(*instructions)[i];
+
+			Operation wire = instruction->wire;
+			int mode = instruction->mode;
+			Task task = Machine::Tasks[wire];
+
+			string description = std::to_string(i) + "| <" + ( wire ? Names::Wiring[wire] : "JUMP" ) + ">";
+
+			if (( task == Task::Value || task == Task::Array || task == Task::Table || task == Task::Block ) && mode > -1 && mode < runtime->literals.size()) description += ": " + regex_replace(runtime->literals[mode]->describe(), Utils::Flatten, " ");
+			if (task == Task::Read && mode > -1 && mode < runtime->words.size()) description += ": " + runtime->words[mode];
+			if (task == Task::Operate && Names::Operators.count(mode)) description += ": " + Names::Operators[mode];
+			if (task == Task::Decide || task == Task::Jump) description += ": " + std::to_string(mode);
+
+			if (instruction->children[0] > -1) {
+				description += " <[ ";
+				
+				for (int i = 0; i < 2; i++) {
+					if (instruction->children[i] > -1) {
+						if (i != 0) description += ", ";
+						description += std::to_string(instruction->children[i]);
+					}
+				}
+
+				description += " ]>";
+			}
+
+			cout << description << endl;
+		}
+	}
+
+	vector<int> Link(Runtime* runtime, vector<Node>* tree, vector<Instruction>* instructions, int offset = 0) {
+		vector<int> children;
+
+		for (int i = tree->size() - 1; i >= 0; i--) {
+			Node* node = &(*tree)[i];
+			Task task = node->task;
+
+			Operation wire = task == Task::End ? nullptr : Machine::Wiring[task];
+			
+			int mode = 0;
+			int relation = -1;
+
+			if (task == Task::Value || task == Task::Array || task == Task::Table || task == Task::Block) {
+				runtime->literals.push_back(Value::Make(node));
+				mode = runtime->literals.size() - 1;
+				if (task == Task::Array || task == Task::Table) {
+					runtime->relations.push_back({});
+					relation = runtime->relations.size() - 1;
+				}
+			} else if (task == Task::Read) {
+				if (node->mark == Mark::Word) {
+					runtime->words.push_back(node->contents);
+					mode = runtime->words.size() - 1;
+				}
+			} else if (task == Task::Operate) {
+				if (Operate::Reduced.count(node->contents)) mode = Operate::Reduced[node->contents];
+			}
+
+			Instruction instruction = Instruction{ wire, mode };
+
+			if (task == Task::Block) {
+				int d = 0; for (int a = 0; a < node->children[0].children.size(); a += 2) {
+					runtime->literals[mode]->block->arguments.push_back(node->children[0].children[a].contents);
+					vector<Node> defaulting = { node->children[0].children[a + 1] };
+					runtime->literals[mode]->block->defaults.push_back({});
+					Compile(runtime, &defaulting, &runtime->literals[mode]->block->defaults[d]); d++;
+				}
+
+				vector<Node> body = node->children; body.erase(body.begin());
+				Compile(runtime, &body, &runtime->literals[mode]->block->body);
+			}
+
+			if (task == Task::Decide) {
+				vector<Instruction> statement;
+				for (int i = node->children.size() - 2; i >= 0; i -= 2) {
+					int steps = statement.size();
+
+					if (i < node->children.size() - 2) statement.push_back(Instruction{ Machine::Wiring[Task::Jump] });
+					Link(runtime, &node->children[i + 1].children, &statement, instructions->size() + offset);
+
+					steps = statement.size() - steps;
+
+					Instruction decide = Instruction{ wire };
+					decide.mode = steps;
+					statement.push_back(decide);
+
+					vector<Node> question = { node->children[i] };
+					Link(runtime, &question, &statement, instructions->size() + offset);
+				}
+
+				int level = 1;
+				for (int i = statement.size() - 1; i >= 0; i--) {
+					if (!statement[i].wire) statement[i].mode = statement.size() - level;
+					level++;
+				}
+
+				for (int i = 0; i < statement.size(); i++) instructions->push_back(statement[i]);
+			} else {
+				instructions->push_back(instruction);
+				int self = instructions->size() - 1;
+				children.push_back(self + offset);
+				if (task != Task::Block) {
+					vector<int> subchildren = Link(runtime, &node->children, instructions, offset);
+					if ((task == Task::Array || task == Task::Table)) {
+						for (int i = 0; i < subchildren.size(); i++) runtime->relations[relation].insert(runtime->relations[relation].begin(), subchildren[i]);
+						(*instructions)[self].children[0] = relation;
+					} else {
+						for (int i = 0; i < subchildren.size(); i++) (*instructions)[self].children[i] = subchildren[i];
+					}
+				}
+			}
+		}
+
+		return children;
+	}
+
+	void Compile(Runtime* runtime, vector<Node>* tree, vector<Instruction>* instructions) {
+		vector<Instruction> reverse;
+		Link(runtime, tree, &reverse);
+
+		for (int i = reverse.size() - 1; i >= 0; i--) {
+			Instruction real = reverse[i];
+
+			if (real.wire == Machine::Wiring[Task::Array] || real.wire == Machine::Wiring[Task::Table]) {
+				for (int r = 0; r < runtime->relations[real.children[0]].size(); r++) {
+					runtime->relations[real.children[0]][r] = (reverse.size() - 1) - runtime->relations[real.children[0]][r];
+				}
+			} else {
+				if (reverse[i].children[0] != -1 && reverse[i].children[1] != -1) {
+					real.children[1] = (reverse.size() - 1) - reverse[i].children[0];
+					real.children[0] = (reverse.size() - 1) - reverse[i].children[1];
+				} else if (reverse[i].children[0] != -1) {
+					real.children[0] = (reverse.size() - 1) - reverse[i].children[0];
+				} else if (reverse[i].children[1] != -1) {
+					real.children[1] = (reverse.size() - 1) - reverse[i].children[1];
+				}
+			}
+			
+			instructions->push_back(real);
+		}
+	}
+}

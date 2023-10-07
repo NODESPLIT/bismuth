@@ -1,74 +1,76 @@
 namespace Machine {
-	Reference VALUE(Instruction* instruction) {
-		return Instance->literals[instruction->index];
+	Reference VALUE(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
+		return Instance->literals[instruction->mode];
 	}
 
-	Reference ARRAY(Instruction* instruction) {
-		for (int i = 0; i < instruction->children.size(); i++) Instance->literals[instruction->index]->set(i, instruction->children[i].resolve());
-		return Instance->literals[instruction->index];
+	Reference ARRAY(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
+		vector<int>* relations = &Instance->relations[instruction->children[0]];
+		for (int i = 0; i < relations->size(); i++) Instance->literals[instruction->mode]->set(i, state[ (*relations)[i] ]);
+		return Instance->literals[instruction->mode];
 	}
 
-	Reference TABLE(Instruction* instruction) {
-		for (int i = 0; i < instruction->children.size(); i += 2) Instance->literals[instruction->index]->set(Instance->words[instruction->children[i].index], instruction->children[i + 1].resolve());
-		return Instance->literals[instruction->index];
+	Reference TABLE(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
+		vector<int>* relations = &Instance->relations[instruction->children[0]];
+		for (int i = 0; i < relations->size(); i += 2) Instance->literals[instruction->mode]->set(state[ (*relations)[i] ]->as<String>(), state[ (*relations)[i + 1] ]);
+		return Instance->literals[instruction->mode];
 	}
 
-	Reference BLOCK(Instruction* instruction) {
-		Reference value = Instance->literals[instruction->index];
-		value->block->context = Instance->current;
+	Reference BLOCK(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
+		Reference value = Instance->literals[instruction->mode];
+		value->block->context = Instance->scopes.top();
 		return value;
 	}
 
-	Reference READ(Instruction* instruction) {
-		string word = Instance->words[instruction->index];
+	Reference READ(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
+		string word = Instance->words[instruction->mode];
 
-		if (auto current = Instance->current->find(word); current != Instance->current->end()) {
-			return current->second;
+		if (auto scope = Instance->scopes.top()->find(word); scope != Instance->scopes.top()->end()) {
+			return scope->second;
 		} else if (auto environment = Instance->environment->find(word); environment != Instance->environment->end() ) {
 	    return environment->second;
 		} else {
-		  return (*Instance->current)[word] = Value::Empty();
+		  (*Instance->scopes.top())[word] = Value::Empty();
+		  return (*Instance->scopes.top())[word];
 		}
 	}
 
-	Reference INSIDE(Instruction* instruction) {
-		return instruction->children[0].resolve()->get(instruction->children[1].resolve());
+	Reference INSIDE(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
+		return state[instruction->children[0]]->get(state[instruction->children[1]]);
 	}
 
-	Reference DEFINE(Instruction* instruction) {
-		Reference left = instruction->children[0].resolve();
-		left->set(instruction->children[1].resolve());
+	Reference DEFINE(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
+		Reference left = state[instruction->children[0]];
+		left->set(instruction->children[1] > -1 ? state[instruction->children[1]] : last);
 		return left;
 	}
 
-	Reference OPERATE(Instruction* instruction) {
-		Reference left = instruction->children[0].resolve();
-		Reference right = instruction->children[1].resolve();
-		return Operate::List[ instruction->index + ( ( int(left->type) * Operate::Count ) + int(right->type) ) ](left, right);
+	Reference OPERATE(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
+		// cout << "OPERATE: " << instruction->children[0] << ": " << state[instruction->children[0]] << ", " << instruction->children[1] << ": " << state[instruction->children[1]] << endl;
+		Reference left = state[instruction->children[0]];
+		Reference right = instruction->children[1] == -1 ? last : state[instruction->children[1]];
+		return Operate::List[ instruction->mode + ( ( int(left->type) * Operate::Count ) + int(right ? right->type : Type::Void) ) ](left, right);
 	}
 
-	Reference DECIDE(Instruction* instruction) {
-		for (int i = 0; i < instruction->children.size(); i += 2) {
-			if (instruction->children[i].resolve()->isTrue()) {
-				return Instance->resolve(&instruction->children[i + 1].children);
-			}
+	Reference DECIDE(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
+		if (last->isFalse()) {
+			(*cursor).jump = instruction->mode;
+			return Value::Empty();
 		}
-
-		return Value::Empty();
+		return last;
 	}
 
-	Reference CALL(Instruction* instruction) {
-		return Instance->call(instruction->children[0].resolve(), instruction->children[1].resolve()->as<Array&>(), true);
+	Reference CALL(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
+		return Instance->call(state[instruction->children[0]], state[instruction->children[1]]->as<Array&>(), true);
 	}
 
-	Reference RETURN(Instruction* instruction) {
+	Reference RETURN(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
 		Instance->returned = true;
-		return instruction->children[0].resolve();
+		return last;
 	}
 }
 
 namespace Machine {
-	unordered_map<Task, Reference (*)(Instruction*)> Wiring = {
+	unordered_map<Task, Operation> Wiring = {
 		{ Task::Value, &Machine::VALUE },
 		{ Task::Array, &Machine::ARRAY },
 		{ Task::Table, &Machine::TABLE },
@@ -80,9 +82,10 @@ namespace Machine {
 		{ Task::Decide, &Machine::DECIDE },
 		{ Task::Call, &Machine::CALL },
 		{ Task::Return, &Machine::RETURN },
+		{ Task::Jump, nullptr }
 	};
 
-	unordered_map<Reference (*)(Instruction*), Task> Tasks = {
+	unordered_map<Operation, Task> Tasks = {
 		{ &Machine::VALUE, Task::Value },
 		{ &Machine::ARRAY, Task::Array },
 		{ &Machine::TABLE, Task::Table },
@@ -94,11 +97,12 @@ namespace Machine {
 		{ &Machine::DECIDE, Task::Decide },
 		{ &Machine::CALL, Task::Call },
 		{ &Machine::RETURN, Task::Return },
+		{ nullptr, Task::Jump }
 	};
 }
 
 namespace Names {
-	unordered_map<Reference (*)(Instruction*), string> Wiring = {
+	unordered_map<Operation, string> Wiring = {
 		{ &Machine::VALUE, "VALUE" },
 		{ &Machine::ARRAY, "ARRAY" },
 		{ &Machine::TABLE, "TABLE" },
@@ -109,6 +113,7 @@ namespace Names {
 		{ &Machine::OPERATE, "OPERATE" },
 		{ &Machine::DECIDE, "DECIDE" },
 		{ &Machine::CALL, "CALL" },
-		{ &Machine::RETURN, "RETURN" }
+		{ &Machine::RETURN, "RETURN" },
+		{ nullptr, "JUMP" }
 	};
 }
