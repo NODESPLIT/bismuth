@@ -4,7 +4,7 @@ assemble:
 build:
 	rm -rf ./bismuth
 	make assemble
-	g++ -std=c++20 $(options) main.cpp -o bismuth -lncurses
+	g++ -std=c++20 $(options) main.cpp -o bismuth -llinenoise
 
 fresh:
 	make build -j12

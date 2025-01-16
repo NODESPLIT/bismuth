@@ -1,4 +1,4 @@
-#include <ncurses.h>
+#include <linenoise.h>
 #include <algorithm>
 #include <iostream>
 #include <sstream>

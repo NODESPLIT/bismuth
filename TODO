@@ -6,7 +6,7 @@ Functionality:
 -3 Potentially rewrite compilation to assemble a list of instructions with uuids instead of real registers then walk the list to insert real registers
 -3 |= operator to set a variable to a value only if its falsy
 -3 Calling string uses it as a format string with the arguments as the values
--3 Tagged string literal like javascript function`content` to allow for interpretation of strings
+-3 Tagged string literal like javascript function`content` to allow for interpolation of strings
 -3 Work out cool ways inside operator could work
 -3 Add reduce operator like colon but takes initial value and reduces with it: maybe just use inside with parameters for this instead
 -3 Build solid standard library with:

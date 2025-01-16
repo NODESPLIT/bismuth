@@ -10,8 +10,6 @@ Reference load(string path, Reference in=nullptr, Scope scope=nullptr) {
 	if (!scope) scope = global;
 	init(scope, path, in);
 
-	scopes.push(scope);
-
 	ifstream stream = ifstream(path);
 	
 	if (!stream.good()) return Value::Empty();

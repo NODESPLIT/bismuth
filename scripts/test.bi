@@ -1,5 +1,6 @@
 block = [ n ]{
-	if n > 10 {
+	log(n)
+	if n >= 10 {
 		return 10
 	} else {
 		block(n + 1)

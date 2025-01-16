@@ -4,15 +4,17 @@ namespace Machine {
 	}
 
 	Reference ARRAY(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
+		Reference array = Value::Empty(Type::Array);
 		vector<int>* relations = &Instance->relations[instruction->children[0]];
-		for (int i = 0; i < relations->size(); i++) Instance->literals[instruction->mode]->set(i, state[ (*relations)[i] ]);
-		return Instance->literals[instruction->mode];
+		for (int i = 0; i < relations->size(); i++) array->set(i, Value::Copy(state[ (*relations)[i] ]));
+		return array;
 	}
 
 	Reference TABLE(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
+		Reference table = Value::Empty(Type::Table);
 		vector<int>* relations = &Instance->relations[instruction->children[0]];
-		for (int i = 0; i < relations->size(); i += 2) Instance->literals[instruction->mode]->set(state[ (*relations)[i] ]->as<String>(), state[ (*relations)[i + 1] ]);
-		return Instance->literals[instruction->mode];
+		for (int i = 0; i < relations->size(); i += 2) table->set(state[ (*relations)[i] ]->as<String>(), Value::Copy(state[ (*relations)[i + 1] ]));
+		return table;
 	}
 
 	Reference BLOCK(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
@@ -40,7 +42,7 @@ namespace Machine {
 
 	Reference DEFINE(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
 		Reference left = state[instruction->children[0]];
-		left->set(instruction->children[1] > -1 ? state[instruction->children[1]] : last);
+		left->set(Value::Copy(instruction->children[1] > -1 ? state[instruction->children[1]] : last));
 		return left;
 	}
 

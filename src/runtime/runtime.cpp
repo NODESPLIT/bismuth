@@ -21,6 +21,7 @@ class Runtime {
 		void init(Scope scope, string path="./", Reference in=nullptr) {
 			(*scope)["@path"] = Value::Lock(Value::Make(path));
 			(*scope)["@in"] = in ? Value::Lock(Value::Copy(in)) : Value::Empty();
+			scopes.push(scope);
 		}
 
 		Scope branched(Scope origin=nullptr) {
@@ -47,7 +48,7 @@ class Runtime {
 			Reference result = run(block->body, branch);
 			scopes.pop();
 
-			return result;
+			return Value::Copy(result);
 		}
 
 		Reference run(vector<Instruction> instructions, bool returns=false) {

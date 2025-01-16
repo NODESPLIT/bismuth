@@ -11,6 +11,7 @@ struct Operator {
 };
 
 map<string, Operator> Operators = {
+	{ "::", Operator { 8, Pairing::Binary, Effect::Inside, Orientation::RightToLeft } },
 	{ ":", Operator { 8, Pairing::Binary, Effect::Inside, Orientation::RightToLeft } },
 	{ "->", Operator { 8, Pairing::Binary, Effect::Inside, Orientation::RightToLeft } },
 	{ "=", Operator { 8, Pairing::Binary, Effect::Assignment, Orientation::RightToLeft } },

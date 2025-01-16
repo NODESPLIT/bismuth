@@ -37,6 +37,33 @@ class Value {
 		template <class T> static Reference Make(T one) { return Reference(new Value(one)); }
 		template <class T1, class T2> static Reference Make(T1 one, T2 two) { return Reference(new Value(one, two)); }
 
+		static Reference Scan(Reference value, Reference name, function<Reference(Reference, Reference)> callback) {
+			if (value->is(Type::Array)) {
+				return Make(Scan(value->as<Array>(), callback));
+			} else if (value->is(Type::Table)) {
+				return Make(Scan(value->as<Table>(), callback));
+			}
+
+			return callback(value, name);
+		}
+
+		static Array Scan(Array subject, function<Reference(Reference, Reference)> callback) {
+			Array output;
+			for (int i = 0; i < subject.size(); i++) output.push_back(Scan(subject[i], Make(i), callback));
+			return output;
+		}
+
+		static Table Scan(Table subject, function<Reference(Reference, Reference)> callback) {
+			Table output;
+			
+			for (const auto& [ name, variable ] : subject) {
+				output[name] = Empty();
+				output[name]->set(Scan(variable, Make(name), callback));
+			}
+
+			return output;
+		}
+
 		static Reference Lock(Reference value) { value->immutable = true; return value; }
 		static Reference Copy(Reference from) { Reference copy = Empty(); copy->SET(from); return copy; }
 
@@ -85,11 +112,11 @@ class Value {
 				value = node->contents;
 			} else if (node->mark == Mark::Table) {
 				type = Type::Table;
-				Table table = Table{}; for (int i = 0; i < node->children.size(); i += 2) table[node->children[i].contents] = Value::Make(&node->children[i + 1]);
+				Table table = Table{}; for (int i = 0; i < node->children.size(); i += 2) table[node->children[i].contents] = Make(&node->children[i + 1]);
 				value = table;
 			} else if (node->mark == Mark::Array) {
 				type = Type::Array;
-				Array array = Array{}; for (int i = 0; i < node->children.size(); i++) array.push_back(Value::Make(&node->children[i]));
+				Array array = Array{}; for (int i = 0; i < node->children.size(); i++) array.push_back(Make(&node->children[i]));
 				value = array;
 			} else if (node->mark == Mark::Block) {
 				type = Type::Block;

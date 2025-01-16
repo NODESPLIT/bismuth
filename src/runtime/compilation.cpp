@@ -43,13 +43,12 @@ namespace Machine {
 			int mode = 0;
 			int relation = -1;
 
-			if (task == Task::Value || task == Task::Array || task == Task::Table || task == Task::Block) {
+			if (task == Task::Value || task == Task::Block) {
 				runtime->literals.push_back(Value::Make(node));
 				mode = runtime->literals.size() - 1;
-				if (task == Task::Array || task == Task::Table) {
-					runtime->relations.push_back({});
-					relation = runtime->relations.size() - 1;
-				}
+			} else if (task == Task::Array || task == Task::Table) {
+				runtime->relations.push_back({});
+				relation = runtime->relations.size() - 1;
 			} else if (task == Task::Read) {
 				if (node->mark == Mark::Word) {
 					runtime->words.push_back(node->contents);

@@ -38,6 +38,7 @@ namespace Math {
 		(*environment)["math"]->SET("fabs", Block::Bound([](Array arguments) { return Value::Make(fabs(arguments[0]->as<Number>())); }));
 		(*environment)["math"]->SET("floor", Block::Bound([](Array arguments) { return Value::Make(floor(arguments[0]->as<Number>())); }));
 		(*environment)["math"]->SET("fmod", Block::Bound([](Array arguments) { return Value::Make(fmod(arguments[0]->as<Number>(), arguments[1]->as<Number>())); }));
+		(*environment)["math"]->SET("random", Block::Bound([](Array arguments) { return Value::Make(rand()); }));
 
 		(*environment)["math"]->SET("frexp", Block::Bound([](Array arguments) {
 			Reference output = Value::Locked(Type::Table);

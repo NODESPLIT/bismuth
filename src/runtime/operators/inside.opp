@@ -2,6 +2,32 @@
 
 ( Number, Number ) :{ return Value::Make(left->as<Number>(), right->as<Number>()); }:
 
+
+[ :: ]
+
+( Array, Block ) :{
+	return Value::Make(
+		Value::Scan(
+			left->as<Array>(),
+			[right](Reference value, Reference index) {
+				return Instance->call(right, { value, index }, false);
+			}
+		)
+	);
+}:
+
+( Table, Block ) :{
+	return Value::Make(
+		Value::Scan(
+			left->as<Table>(),
+			[right](Reference value, Reference key) {
+				return Instance->call(right, { value, key }, false);
+			}
+		)
+	);
+}:
+
+
 [ : ]
 
 ( Number, Block ) :{

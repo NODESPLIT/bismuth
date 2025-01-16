@@ -3,7 +3,7 @@ fib = [ n ] {
 	fib( n - 1 ) + fib( n - 2 )
 }
 
-number = 35
+number = 28
 
 duration = time.while([]{ result = fib(number) })
 'recursive fib(' + number + '): ' + result + ' ( duration: ' + duration + 'ms )'
