@@ -9,9 +9,11 @@
 
 #include <stack>
 
-#include <boost/container/map.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/container/vector.hpp>
+
+#include <tsl/ordered_map.h>
 
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
@@ -20,8 +22,9 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 
+namespace algorithm = boost::algorithm;
+
 template <class L, class R> using unordered_map = boost::unordered_map<L, R>;
-template <class L, class R> using map = boost::container::map<L, R>;
 template <class T> using vector = boost::container::vector<T>;
 template <class L, class R> using tuple = boost::tuple<L, R>;
 
@@ -41,6 +44,12 @@ using std::endl;
 using boost::shared_ptr;
 using boost::make_tuple;
 using boost::any;
+
+vector<string> split(string text, string search) {
+	vector<string> parts;
+	algorithm::split(parts, text, algorithm::is_any_of(search));
+	return parts;
+};
 
 namespace Bismuth {
 	const string Name = "bismuth";

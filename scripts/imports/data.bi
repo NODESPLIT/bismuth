@@ -1,5 +1,5 @@
-log(@.path)
-log(@.in)
+log(#.path)
+log(#.in)
 
 test
 

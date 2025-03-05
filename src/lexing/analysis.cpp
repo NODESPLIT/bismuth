@@ -38,7 +38,7 @@ void Analyse(string bismuth, vector<Token>* target, bool listing) {
 
 		if (complete) {
 			Token token = Token(cued, stay ? contents.substr(0, contents.size() - 1) : contents);
-			step = Scanners[cued].parse ? Scanners[cued].parse(&token, last, target) : Step::Next;
+			step = Scanners[cued].parse ? Scanners[cued].parse(&token, last, target, listing) : Step::Next;
 
 			if (step == Step::Over && target->size() > 0) {
 				(*target)[target->size() - 1] = token;
@@ -64,7 +64,7 @@ void Analyse(string bismuth, vector<Token>* target, bool listing) {
 		if (cued != Mark::None) {
 			contents += character;
 
-			step = Scanners[cued].end(character, last);
+			step = Scanners[cued].end(character, last, listing);
 			if (step == Step::Nest) nesting++;
 
 			if (nesting == 0) {
@@ -85,7 +85,7 @@ void Analyse(string bismuth, vector<Token>* target, bool listing) {
 
 		if (character != '	' || character != ' ') {
 			for (const auto& [ type, scanner ] : Scanners) {
-				step = scanner.cue(character, last);
+				step = scanner.cue(character, last, listing);
 				
 				if (step == Step::Next) continue;
 				if (step == Step::Stop) { complete = true; single = true; }

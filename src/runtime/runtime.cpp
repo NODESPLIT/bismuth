@@ -1,5 +1,10 @@
 Runtime* Instance;
 
+struct Symbol {
+	inline static const string Context = "#";
+	inline static const string Instance = "@";
+};
+
 class Runtime {
 	public:
 		#include "interpretation.cpp"
@@ -19,13 +24,20 @@ class Runtime {
 		Runtime(string path, Reference in=nullptr) { Bindings::Bind(this); result = load(path, in, global); }
 
 		void init(Scope scope, string path="./", Reference in=nullptr) {
-			(*scope)["@path"] = Value::Lock(Value::Make(path));
-			(*scope)["@in"] = in ? Value::Lock(Value::Copy(in)) : Value::Empty();
+			(*scope)[Symbol::Context] = Value::Lock(Value::Empty(Type::Table));
+			(*scope)[Symbol::Context]->SET("path", Value::Lock(Value::Make(path)));
+			(*scope)[Symbol::Context]->SET("in", in ? Value::Lock(Value::Copy(in)) : Value::Empty());
 			scopes.push(scope);
 		}
 
-		Scope branched(Scope origin=nullptr) {
-			if (origin) return boost::make_shared<Table>(*origin);
+		Scope branched(Scope origin=nullptr, Table initial={}) {
+			if (origin) {
+				Scope branch = boost::make_shared<Table>(*origin);
+				(*branch)[Symbol::Context] = Value::Empty(Type::Table);
+				for (const auto& [ name, variable ] : (*origin)[Symbol::Context]->as<Table&>()) (*branch)[Symbol::Context]->SET(name, Value::Copy(variable));
+				return branch;
+			}
+
 			return Scope(new Table());
 		}
 
@@ -34,16 +46,28 @@ class Runtime {
 			shared_ptr<Block> block = value->block;
 			if (block->binding) return block->binding(values);
 
-			scopes.push(branch ? branched(block->context) : block->context);
+			scopes.push(branch ? branched(value->context) : value->context);
+
+			Reference arguments = Value::Lock(Value::Empty(Type::Array));
+			int argument = 0;
 
 			for (int i = 0; i < block->arguments.size(); i++) {
-				if (i < values.size()) {
-					(*scopes.top())[block->arguments[i]] = Value::Copy(values[i]);
-				} else {
+				if (i >= values.size() || values[i]->is(Type::Void)) {
 					Reference defaulting = run(block->defaults[i]);
 					(*scopes.top())[block->arguments[i]] = defaulting;
+					arguments->SET(argument, Value::Copy(defaulting));
+				} else {
+					(*scopes.top())[block->arguments[i]] = Value::Copy(values[i]);
+					arguments->SET(argument, Value::Copy(values[i]));
 				}
+
+				argument++;
 			}
+
+			for (int i = argument; i < values.size(); i++) arguments->SET(i, Value::Copy(values[i]));
+			(*scopes.top())[Symbol::Context]->SET("args", arguments);
+
+			if (value->container) (*scopes.top())[Symbol::Instance] = value->container;
 
 			Reference result = run(block->body, branch);
 			scopes.pop();

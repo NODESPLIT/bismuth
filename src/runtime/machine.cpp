@@ -18,8 +18,8 @@ namespace Machine {
 	}
 
 	Reference BLOCK(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
-		Reference value = Instance->literals[instruction->mode];
-		value->block->context = Instance->scopes.top();
+		Reference value = Value::Copy(Instance->literals[instruction->mode]);
+		value->context = Instance->scopes.top();
 		return value;
 	}
 
@@ -44,6 +44,12 @@ namespace Machine {
 		Reference left = state[instruction->children[0]];
 		left->set(Value::Copy(instruction->children[1] > -1 ? state[instruction->children[1]] : last));
 		return left;
+	}
+
+	Reference DELETE(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
+		string word = Instance->words[instruction->mode];
+		(*Instance->scopes.top()).erase(word);
+		return last;
 	}
 
 	Reference OPERATE(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
@@ -80,6 +86,7 @@ namespace Machine {
 		{ Task::Read, &Machine::READ },
 		{ Task::Inside, &Machine::INSIDE },
 		{ Task::Define, &Machine::DEFINE },
+		{ Task::Delete, &Machine::DELETE },
 		{ Task::Operate, &Machine::OPERATE },
 		{ Task::Decide, &Machine::DECIDE },
 		{ Task::Call, &Machine::CALL },
@@ -95,6 +102,7 @@ namespace Machine {
 		{ &Machine::READ, Task::Read },
 		{ &Machine::INSIDE, Task::Inside },
 		{ &Machine::DEFINE, Task::Define },
+		{ &Machine::DELETE, Task::Delete },
 		{ &Machine::OPERATE, Task::Operate },
 		{ &Machine::DECIDE, Task::Decide },
 		{ &Machine::CALL, Task::Call },
@@ -112,6 +120,7 @@ namespace Names {
 		{ &Machine::READ, "READ" },
 		{ &Machine::INSIDE, "INSIDE" },
 		{ &Machine::DEFINE, "DEFINE" },
+		{ &Machine::DELETE, "DELETE" },
 		{ &Machine::OPERATE, "OPERATE" },
 		{ &Machine::DECIDE, "DECIDE" },
 		{ &Machine::CALL, "CALL" },

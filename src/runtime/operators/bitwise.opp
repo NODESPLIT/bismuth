@@ -1,0 +1,17 @@
+[ & ]
+( Number, Number ) :{ return Value::Make(int(left->as<Number>()) & int(right->as<Number>())); }:
+
+[ | ]
+( Number, Number ) :{ return Value::Make(int(left->as<Number>()) | int(right->as<Number>())); }:
+
+[ ^ ]
+( Number, Number ) :{ return Value::Make(int(left->as<Number>()) ^ int(right->as<Number>())); }:
+
+[ ~_ ]
+( Number, Any ) :{ return Value::Make(~int(left->as<Number>())); }:
+
+[ << ]
+( Number, Number ) :{ return Value::Make(int(left->as<Number>()) << int(right->as<Number>())); }:
+
+[ >> ]
+( Number, Number ) :{ return Value::Make(int(left->as<Number>()) >> int(right->as<Number>())); }:

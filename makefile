@@ -4,10 +4,23 @@ assemble:
 build:
 	rm -rf ./bismuth
 	make assemble
-	g++ -std=c++20 $(options) main.cpp -o bismuth -llinenoise
+	clang++ -std=c++20 -O0 $(options) -Wall main.cpp -o bismuth -llinenoise
+
+optimal:
+	rm -rf ./bismuth
+	make assemble
+	clang++ -std=c++20 -fomit-frame-pointer -fnew-alignment 8 -O3 $(options) -Wall main.cpp -o bismuth -llinenoise /opt/homebrew/Cellar/gperftools/2.16/lib/libtcmalloc_and_profiler.a
+
+superoptimal:
+	rm -rf ./bismuth
+	make assemble
+	/Users/anom.li/souper/build/sclang++ -std=c++20 \
+		-fomit-frame-pointer -fnew-alignment 8 $(options) -Wall \
+		main.cpp -o bismuth \
+		-llinenoise /opt/homebrew/Cellar/gperftools/2.16/lib/libtcmalloc_and_profiler.a
 
 fresh:
-	make build -j12
+	make optimal -j10
 	make script=$(script) run
 
 run:
@@ -17,7 +30,7 @@ verbose:
 	./bismuth -v $(script)
 
 test:
-	make build -j12
+	make build -j10
 	make script=$(script) verbose
 
 debug:
@@ -25,7 +38,7 @@ debug:
 	lldb -o run bismuth verbose $(script)
 
 deploy:
-	make build
+	make optimal
 	make install
 
 install:
@@ -36,5 +49,5 @@ bench:
 	/usr/bin/time -l -h -p ./bismuth scripts/bench/fib
 
 tune:
-	make build
+	make optimal
 	make bench

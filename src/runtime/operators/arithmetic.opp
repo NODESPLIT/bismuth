@@ -2,6 +2,54 @@
 ( Number, Number ) :{ return Value::Make(left->as<Number>() + right->as<Number>()); }:
 ( Number, String ) :{ return Value::Make(left->describe() + right->as<String>()); }:
 ( String, String ) :{ return Value::Make(left->as<String>() + right->as<String>()); }:
+
+( Array, Array ) :{
+	Array array = left->as<Array>();
+	Array concat = right->as<Array>();
+	for (int i = 0; i < concat.size(); i++) array.push_back(Value::Copy(concat[i]));
+	return Value::Make(array);
+}:
+
+( Array, Table ) :{
+	Array array = left->as<Array>();
+	Table table = right->as<Table>();
+
+	for (const auto& [ name, variable ] : table) {
+		array.push_back(Value::Make(name));
+		array.push_back(Value::Copy(variable));
+	}
+
+	return Value::Make(array);
+}:
+
+( Array, String ) :{
+	Array array = left->as<Array>();
+	String string = right->as<String>();
+	for (char& character : string) array.push_back(Value::Make(String() + character));
+	return Value::Make(array);
+}:
+
+( Table, Table ) :{
+	Table table = left->as<Table>();
+	Table concat = right->as<Table>();
+	for (const auto& [ name, variable ] : concat) table[name] = Value::Copy(variable);
+	return Value::Make(table);
+}:
+
+( Table, Array ) :{
+	Table table = left->as<Table>();
+	Array array = right->as<Array>();
+	for (int i = 0; i < array.size(); i++) table[std::to_string(i)] = Value::Copy(array[i]);
+	return Value::Make(table);
+}:
+
+( Table, String ) :{
+	Table table = left->as<Table>();
+	String string = right->as<String>();
+	int i = 0; for (char& character : string) table[std::to_string(i++)] = Value::Make(String() + character);
+	return Value::Make(table);
+}:
+
 ( String, Any ) :{ return Value::Make(left->as<String>() + right->describe()); }:
 ( Any, String ) :{ return Value::Make(left->describe() + right->as<String>()); }:
 ( Any, Any ) :{ return Value::Make(left->describe() + right->describe()); }:
@@ -11,9 +59,16 @@
 
 [ * ]
 ( Number, Number ) :{ return Value::Make(left->as<Number>() * right->as<Number>()); }:
+( String, Number ) :{
+	String subject = left->as<String>();
+	String output = "";
+	for (int i = 0; i < right->as<Number>(); i++) output += subject;
+	return Value::Make(output);
+}:
 
 [ / ]
 ( Number, Number ) :{ return Value::Make(left->as<Number>() / right->as<Number>()); }:
+( String, String ) :{ return Value::Make(split(left->as<String>(), right->as<String>())); }:
 
 [ % ]
 ( Number, Number ) :{ return Value::Make(fmod(left->as<Number>(), right->as<Number>())); }:

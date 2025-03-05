@@ -1,14 +1,15 @@
 Functionality:
 
 -4 Set up all standard operators
-	-2 Binary operators
+	+2 Binary operators
 	+4 Make better system for unary operators: right now - only works before a number (maybe just do this when I refactor parser)
 -3 Potentially rewrite compilation to assemble a list of instructions with uuids instead of real registers then walk the list to insert real registers
 -3 |= operator to set a variable to a value only if its falsy
+-3 Defaults on destructure
+-3 Splatting array/table values into place
 -3 Calling string uses it as a format string with the arguments as the values
 -3 Tagged string literal like javascript function`content` to allow for interpolation of strings
 -3 Work out cool ways inside operator could work
--3 Add reduce operator like colon but takes initial value and reduces with it: maybe just use inside with parameters for this instead
 -3 Build solid standard library with:
 	- Time
 	- Logging: log / plog done - need to add raw print
@@ -18,12 +19,14 @@ Functionality:
 -2 Figure out type system: Add type specific methods to type (things like 'one, two, three'.split(','), this could also be 'one, two, three' / ',' to be fair)
 -2 When statements
 -2 Make system for block values that checks if a method is pure and caches arguments against results
--2 Destructuring
 -2 Regex support
 -1 Look into pipe operators (recommended to look at elixir)
 -1 Include keyword to load and insert file contents into string at lexer ( insert('file.jom') ): might not actually support this functionality
 -1 Figure out getters on tables
 -1 Figure out system similar to "metatable" but using nice syntax
+-1 Cache instructions as .bibyte files to skip compilation when run again
++3 Add reduce operator like colon but takes initial value and reduces with it: maybe just use inside with parameters for this instead
++2 Destructuring
 +4 Set up single line and multiline comments, probably just use //
 +4 Default values in block arguments: made all default values resolve a statement
 +4 Return keyword
@@ -34,6 +37,7 @@ Optimisation:
 -4 Make variables sit on a vector or array instead of a map<string, Reference> and separate naming, use indexes everywhere else
 -4 Detect when blocks are pure and cache their results against args in memory
 -3 Make more efficient inside operator (no output)
+-2 Potential optimisation with destructuring when the end value is a constant (just use the constant)
 +4 Recursion seems to be creating endless loops (or really slow): could be scope shared pointer reaching limits of creation???
 +4 Make operator matrix ( operator * type * type ) prior to interpretation to access operator functions without looking in maps
 +4 Change token type system to stop using string comparison (lmao)

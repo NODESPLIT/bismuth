@@ -10,7 +10,7 @@ namespace Machine {
 			string description = std::to_string(i) + "| <" + ( wire ? Names::Wiring[wire] : "JUMP" ) + ">";
 
 			if (( task == Task::Value || task == Task::Array || task == Task::Table || task == Task::Block ) && mode > -1 && mode < runtime->literals.size()) description += ": " + regex_replace(runtime->literals[mode]->describe(), Utils::Flatten, " ");
-			if (task == Task::Read && mode > -1 && mode < runtime->words.size()) description += ": " + runtime->words[mode];
+			if (task == Task::Read || ( task == Task::Delete && mode > -1 && mode < runtime->words.size() )) description += ": " + runtime->words[mode];
 			if (task == Task::Operate && Names::Operators.count(mode)) description += ": " + Names::Operators[mode];
 			if (task == Task::Decide || task == Task::Jump) description += ": " + std::to_string(mode);
 
@@ -49,7 +49,7 @@ namespace Machine {
 			} else if (task == Task::Array || task == Task::Table) {
 				runtime->relations.push_back({});
 				relation = runtime->relations.size() - 1;
-			} else if (task == Task::Read) {
+			} else if (task == Task::Read || task == Task::Delete) {
 				if (node->mark == Mark::Word) {
 					runtime->words.push_back(node->contents);
 					mode = runtime->words.size() - 1;
@@ -61,14 +61,112 @@ namespace Machine {
 			Instruction instruction = Instruction{ wire, mode };
 
 			if (task == Task::Block) {
-				int d = 0; for (int a = 0; a < node->children[0].children.size(); a += 2) {
-					runtime->literals[mode]->block->arguments.push_back(node->children[0].children[a].contents);
+				vector<Node> head;
+				
+				int arg = 0;
+				int spreaded = 0;
+
+				for (int a = 0; a < node->children[0].children.size(); a += 2) {
+					if (node->children[0].children[a].task == Task::Operate && node->children[0].children[a].contents == "*_") {
+						head.push_back(
+							Node(
+								Task::Define,
+								"=",
+								{
+									Node(Task::Read, Mark::Word, node->children[0].children[a].children[0].contents),
+									Node(
+										Task::Inside,
+										Mark::Index,
+										{
+											Node(
+												Task::Inside,
+												Mark::Index,
+												{
+													Node(Task::Read, Mark::Word, Symbol::Context),
+													Node(Task::Value, Mark::String, "args")
+												}
+											),
+											Node(
+												Task::Operate,
+												Mark::Operator,
+												"->",
+												{
+													Node(Task::Value, Mark::Number, std::to_string(a / 2)),
+													Node(Task::Value, Mark::Number, std::to_string(spreaded = int((a / 2) - (node->children[0].children.size() / 2))))
+												}
+											)
+										}
+									)
+								}
+							)
+						);
+
+						runtime->literals[mode]->block->arguments.push_back("_");
+					} else if (node->children[0].children[a].task == Task::Array || node->children[0].children[a].task == Task::Table) {
+						Destructure(
+							&node->children[0].children[a],
+							&head,
+							Node(
+								Task::Inside,
+								Mark::Index,
+								{
+									Node(
+										Task::Inside,
+										Mark::Index,
+										{
+											Node(Task::Read, Mark::Word, Symbol::Context),
+											Node(Task::Value, Mark::String, "args")
+										}
+									),
+									Node(Task::Value, Mark::String, std::to_string(arg))
+								}
+							)
+						);
+
+						runtime->literals[mode]->block->arguments.push_back("_");
+					} else {
+						if (spreaded < 0) {
+							head.push_back(
+								Node(
+									Task::Define,
+									"=",
+									{
+										Node(Task::Read, Mark::Word, node->children[0].children[a].contents),
+										Node(
+											Task::Inside,
+											Mark::Index,
+											{
+												Node(
+													Task::Inside,
+													Mark::Index,
+													{
+														Node(Task::Read, Mark::Word, Symbol::Context),
+														Node(Task::Value, Mark::String, "args")
+													}
+												),
+												Node(Task::Value, Mark::Number, std::to_string(++spreaded))
+											}
+										)
+									}
+								)
+							);
+
+							runtime->literals[mode]->block->arguments.push_back("_");
+						} else {
+							runtime->literals[mode]->block->arguments.push_back(node->children[0].children[a].contents);
+						}
+					}
+
 					vector<Node> defaulting = { node->children[0].children[a + 1] };
 					runtime->literals[mode]->block->defaults.push_back({});
-					Compile(runtime, &defaulting, &runtime->literals[mode]->block->defaults[d]); d++;
+					Compile(runtime, &defaulting, &runtime->literals[mode]->block->defaults[arg]);
+
+					arg++;
 				}
 
 				vector<Node> body = node->children; body.erase(body.begin());
+				for (int h = head.size() - 1; h >= 0; h--) body.insert(body.begin(), head[h]);
+
 				Compile(runtime, &body, &runtime->literals[mode]->block->body);
 			}
 

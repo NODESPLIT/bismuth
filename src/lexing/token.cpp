@@ -39,8 +39,15 @@ class Token {
 
 		Token(){}
 		Token(Mark mark) { this->mark = mark; }
+		
 		Token(Mark mark, string contents) {
 			this->mark = mark;
 			this->contents = contents;
+		}
+
+		Token(Mark mark, string contents, vector<vector<Token>> children) {
+			this->mark = mark;
+			this->contents = contents;
+			this->children = children;
 		}
 };

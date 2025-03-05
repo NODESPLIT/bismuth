@@ -89,7 +89,7 @@ def Operators():
 
 	def Load(path):
 		file = open(folder + '/' + path, 'r')
-		Parse(file.read())
+		Parse(file.read() + '\n')
 
 	for path in os.listdir(folder):
 		if path.endswith('.opp'):

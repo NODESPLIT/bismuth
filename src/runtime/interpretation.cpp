@@ -28,7 +28,7 @@ Reference load(string path, Reference in=nullptr, Scope scope=nullptr) {
 
 Reference import(string path, Reference in=nullptr) {
 	Scope subscope = branched();
-	std::filesystem::path base((*scopes.top())["@path"]->as<string>()); base.remove_filename();
+	std::filesystem::path base((*scopes.top())[Symbol::Context]->get("path")->as<string>()); base.remove_filename();
 	return load(base / path, in, subscope);
 }
 

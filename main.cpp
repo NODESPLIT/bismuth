@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
 	} else {
 		if (Bismuth::Exists(path)) {
 			Bismuth::Runtime runtime = Bismuth::Runtime(path);
-			if (!quiet && !Bismuth::Verbose) cout << runtime.result->describe() << endl;
+			if (!quiet && !Bismuth::Verbose && !runtime.result->is(Bismuth::Type::Void)) cout << runtime.result->describe() << endl;
 		} else {
 			cout << "Bismuth '" << path << "' not found" << endl;
 		}

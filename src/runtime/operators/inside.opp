@@ -3,6 +3,355 @@
 ( Number, Number ) :{ return Value::Make(left->as<Number>(), right->as<Number>()); }:
 
 
+[ ~: ]
+
+( Number, Block ) :{
+	Number amount = left->as<Number>();
+
+	Reference result = Value::Empty();
+	if (amount >= 0) {
+		for (int i = 0; i < amount; i++) result = Instance->call(right, { result, Value::Make(i) }, false);
+	} else {
+		for (int i = amount + 1; i >= 0; i--) result = Instance->call(right, { result, Value::Make(i) }, false);
+	}
+
+	return result;
+}:
+
+( Range, Block ) :{
+	Range range = left->as<Range>();
+
+	Number from = get<0>(range);
+	Number to = get<1>(range);
+	
+	Reference result = Value::Empty();
+	if (from <= to) {
+		for (int i = from; i <= to; i++) result = Instance->call(right, { result, Value::Make(i) }, false);
+	} else {
+		for (int i = from; i >= to; i--) result = Instance->call(right, { result, Value::Make(i) }, false);
+	}
+
+	return result;
+}:
+
+( String, Block ) :{
+	String value = left->as<String>();
+	Reference result = Value::Empty();
+
+	for (int i = 0; i < value.size(); i++) {
+		String character({ value.at(i) });
+		result = Instance->call(right, { result, Value::Make(character), Value::Make(i) }, false);
+	}
+
+	return result;
+}:
+
+( Array, Block ) :{
+	Array array = left->as<Array>();
+
+	Reference result = Value::Empty();
+	for (int i = 0; i < array.size(); i++) result = Instance->call(right, { result, array[i], Value::Make(i) }, false);
+
+	return result;
+}:
+
+( Table, Block ) :{
+	Table table = left->as<Table>();
+	
+	Reference result = Value::Empty();
+	for (const auto& [ name, variable ] : table) result = Instance->call(right, { result, variable, Value::Make(name) }, false);
+
+	return result;
+}:
+
+
+[ -: ]
+
+( Table, Block ) :{
+	Table table = left->as<Table>();
+	Reference output = Value::Empty(Type::Table);
+
+	for (const auto& [ name, variable ] : table) {
+		Reference result = Instance->call(right, { variable, Value::Make(name) }, false);
+		if (result->isFalse()) output->set(name, Value::Copy(variable));
+	}
+
+	return output;
+}:
+
+( Array, Block ) :{
+	Array array = left->as<Array>();
+
+	Array output;
+	for (int i = 0; i < array.size(); i++) {
+		Reference result = Instance->call(right, { array[i], Value::Make(i) }, false);
+		if (result->isFalse()) output.push_back(Value::Copy(array[i]));
+	}
+
+	return Value::Make(output);
+}:
+
+( String, Block ) :{
+	String string = left->as<String>();
+
+	String output;
+	for (int i = 0; i < string.size(); i++) {
+		Reference result = Instance->call(right, { Value::Make(String() + string[i]), Value::Make(i) }, false);
+		if (result->isFalse()) output += string[i];
+	}
+
+	return Value::Make(output);
+}:
+
+( Table, Array ) :{
+	Table table = left->as<Table>();
+	Array without = right->as<Array>();
+
+	Reference output = Value::Empty(Type::Table);
+
+	for (const auto& [ name, variable ] : table) {
+		bool removed = false;
+		
+		for (int i = 0; i < without.size(); i++) {
+			if (without[i]->as<String>().compare(name) == 0) {
+				removed = true;
+				break;
+			}
+		}
+
+		if (!removed) output->set(name, Value::Copy(variable));
+	}
+
+	return output;
+}:
+
+( Array, Array ) :{
+	Array array = left->as<Array>();
+	Array without = right->as<Array>();
+
+	Array output;
+	for (int i = 0; i < array.size(); i++) {
+		bool removed = false;
+		
+		for (int w = 0; w < without.size(); w++) {
+			if (without[w]->as<Number>() == i) {
+				removed = true;
+				break;
+			}
+		}
+
+		if (!removed) output.push_back(Value::Copy(array[i]));
+	}
+
+	return Value::Make(output);
+}:
+
+( Table, String ) :{
+	Table table = left->as<Table>();
+	String without = right->as<String>();
+
+	Reference output = Value::Empty(Type::Table);
+	for (const auto& [ name, variable ] : table) if (without.compare(name) != 0) output->set(name, Value::Copy(variable));
+
+	return output;
+}:
+
+( Array, Number ) :{
+	Array array = left->as<Array>();
+	int without = int(right->as<Number>());
+
+	Array output;
+	for (int i = 0; i < array.size(); i++) if (i != without) output.push_back(Value::Copy(array[i]));
+
+	return Value::Make(output);
+}:
+
+( Array, Range ) :{
+	Array array = left->as<Array>();
+	Range range = right->as<Range>();
+	
+	int from = int(get<0>(range));
+	int to = int(get<1>(range));
+
+	if (from < 0) from = from + array.size();
+	if (to < 0) to = to + array.size();
+
+	Array output;
+	for (int i = 0; i < array.size(); i++) if (i < from || i > to) output.push_back(Value::Copy(array[i]));
+
+	return Value::Make(output);
+}:
+
+
+[ :- ]
+
+( Table, Array ) :{
+	Table table = left->as<Table>();
+	Array without = right->as<Array>();
+
+	Reference output = Value::Empty(Type::Table);
+	for (const auto& [ name, variable ] : table) {
+		bool removed = false;
+		
+		for (int i = 0; i < without.size(); i++) {
+			if (without[i]->equals(variable)) {
+				removed = true;
+				break;
+			}
+		}
+
+		if (!removed) output->set(name, Value::Copy(variable));
+	}
+
+	return output;
+}:
+
+( Array, Array ) :{
+	Array array = left->as<Array>();
+	Array without = right->as<Array>();
+
+	Array output;
+	for (int i = 0; i < array.size(); i++) {
+		bool removed = false;
+		
+		for (int w = 0; w < without.size(); w++) {
+			if (without[w]->equals(array[i])) {
+				removed = true;
+				break;
+			}
+		}
+
+		if (!removed) output.push_back(Value::Copy(array[i]));
+	}
+
+	return Value::Make(output);
+}:
+
+( Table, Any ) :{
+	Table table = left->as<Table>();
+
+	Reference output = Value::Empty(Type::Table);
+	for (const auto& [ name, variable ] : table) if (!right->equals(variable)) output->set(name, Value::Copy(variable));
+
+	return output;
+}:
+
+( Array, Any ) :{
+	Array array = left->as<Array>();
+
+	Array output;
+	for (int i = 0; i < array.size(); i++) if (!right->equals(array[i])) output.push_back(Value::Copy(array[i]));
+
+	return Value::Make(output);
+}:
+
+
+[ +: ]
+
+( Table, Block ) :{
+	Table table = left->as<Table>();
+	Reference output = Value::Empty(Type::Table);
+
+	for (const auto& [ name, variable ] : table) {
+		Reference result = Instance->call(right, { variable, Value::Make(name) }, false);
+		if (result->isTrue()) output->set(name, Value::Copy(variable));
+	}
+
+	return output;
+}:
+
+( Array, Block ) :{
+	Array array = left->as<Array>();
+
+	Array output;
+	for (int i = 0; i < array.size(); i++) {
+		Reference result = Instance->call(right, { array[i], Value::Make(i) }, false);
+		if (result->isTrue()) output.push_back(Value::Copy(array[i]));
+	}
+
+	return Value::Make(output);
+}:
+
+( String, Block ) :{
+	String string = left->as<String>();
+
+	String output;
+	for (int i = 0; i < string.size(); i++) {
+		Reference result = Instance->call(right, { Value::Make(String() + string[i]), Value::Make(i) }, false);
+		if (result->isTrue()) output += string[i];
+	}
+
+	return Value::Make(output);
+}:
+
+
+[ %: ]
+
+( String, String ) :{
+	vector<String> parts;
+	
+	String origin = left->as<String>();
+	for (int i = 0; i < origin.size(); i++) parts.push_back(String() + origin[i]);
+
+	return Value::Make(boost::algorithm::join(parts, right->as<String>()));
+}:
+
+( Array, String ) :{
+	vector<String> parts;
+	
+	Array array = left->as<Array>();
+	for (int i = 0; i < array.size(); i++) parts.push_back(array[i]->cast(Type::String)->as<String>());
+
+	return Value::Make(boost::algorithm::join(parts, right->as<String>()));
+}:
+
+( Array, Array ) :{
+	Array array = left->as<Array>();
+	Array joining = right->as<Array>();
+
+	Array output;
+	for (int i = 0; i < array.size(); i++) {
+		if (i > 0) for (int j = 0; j < joining.size(); j++) output.push_back(Value::Copy(joining[j]));
+		output.push_back(Value::Copy(array[i]));
+	}
+
+	return Value::Make(output);
+}:
+
+( Array, Block ) :{
+	Array array = left->as<Array>();
+
+	Array output;
+	for (int i = 0; i < array.size(); i++) {
+		if (i > 0) {
+			Reference result = Instance->call(right, { Value::Copy(array[i - 1]), Value::Copy(array[i]) }, false);
+			if (result->is(Type::Array)) {
+				Array joining = result->as<Array>();
+				for (int j = 0; j < joining.size(); j++) output.push_back(Value::Copy(joining[j]));
+			} else {
+				output.push_back(result);
+			}
+		}
+
+		output.push_back(Value::Copy(array[i]));
+	}
+
+	return Value::Make(output);
+}:
+
+( Array, Any ) :{
+	Array array = left->as<Array>();
+
+	Array output;
+	for (int i = 0; i < array.size(); i++) {
+		if (i > 0) output.push_back(Value::Copy(right));
+		output.push_back(Value::Copy(array[i]));
+	}
+
+	return Value::Make(output);
+}:
+
+
 [ :: ]
 
 ( Array, Block ) :{
@@ -59,6 +408,19 @@
 	return Value::Make(output);
 }:
 
+( String, Block ) :{
+	String value = left->as<String>();
+	
+	String output = "";
+	for (int i = 0; i < value.size(); i++) {
+		String character({ value.at(i) });
+		Reference result = Instance->call(right, { Value::Make(character), Value::Make(i) }, false);
+		if (result->is(Type::String)) output += result->as<String>();
+	}
+
+	return Value::Make(output);
+}:
+
 ( Array, Block ) :{
 	Array array = left->as<Array>();
 
@@ -75,19 +437,6 @@
 	
 	Table output;
 	for (const auto& [ name, variable ] : table) output[name] = Instance->call(right, { variable, Value::Make(name) }, false);
-
-	return Value::Make(output);
-}:
-
-( String, Block ) :{
-	String value = left->as<String>();
-	
-	String output = "";
-	for (int i = 0; i < value.size(); i++) {
-		String character({ value.at(i) });
-		Reference result = Instance->call(right, { Value::Make(character), Value::Make(i) }, false);
-		if (result->is(Type::String)) output += result->as<String>();
-	}
 
 	return Value::Make(output);
 }:

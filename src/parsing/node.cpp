@@ -12,6 +12,7 @@ class Node {
 		Node(){}
 		Node(Node* origin) { swap(origin); }
 		Node(Task task) { this->task = task; }
+		Node(Task task, vector<Node> children) { this->task = task; this->children = children; }
 
 		Node(Task task, Token* token) { this->task = task; this->mark = token->mark; this->contents = token->contents; }
 		Node(Task task, Token* token, vector<Node> children) { this->task = task; this->mark = token->mark; this->contents = token->contents; this->children = children; }

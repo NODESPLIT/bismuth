@@ -26,6 +26,7 @@ namespace Machine {
 	Reference READ(Reference state[], Instruction* instruction, Reference last, Cursor* cursor);
 	Reference INSIDE(Reference state[], Instruction* instruction, Reference last, Cursor* cursor);
 	Reference DEFINE(Reference state[], Instruction* instruction, Reference last, Cursor* cursor);
+	Reference DELETE(Reference state[], Instruction* instruction, Reference last, Cursor* cursor);
 	Reference OPERATE(Reference state[], Instruction* instruction, Reference last, Cursor* cursor);
 	Reference DECIDE(Reference state[], Instruction* instruction, Reference last, Cursor* cursor);
 	Reference CALL(Reference state[], Instruction* instruction, Reference last, Cursor* cursor);
