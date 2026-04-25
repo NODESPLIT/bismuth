@@ -1,11 +1,13 @@
-import os, json
+import sys, os, json
+
+root = sys.argv[1]
 
 def Save(path, content):
 	with open(path, 'w') as file:
 		file.write(content)
 
 def Operators():
-	global ops
+	global ops, root
 
 	types = [
 		'Void',
@@ -22,7 +24,7 @@ def Operators():
 	pairs = count * count
 
 	invalid = '{ return Value::Empty(); }'
-	folder = 'src/runtime/operators'
+	folder = root + '/src/runtime/operators'
 	operators = {}
 	indexes = {}
 	ops = 0
@@ -149,4 +151,4 @@ def Operators():
 
 	return document
 
-Save('src/runtime/operators.cpp', Operators())
+Save(root + '/src/runtime/operators.cpp', Operators())

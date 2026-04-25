@@ -26,4 +26,15 @@ add_compile_options(-Wall -O3 -fomit-frame-pointer -fnew-alignment)
 set(CMAKE_FIND_LIBRARY_SUFFIXES "${OLD_CMAKE_FIND_LIBRARY_SUFFIXES}")
 unset(OLD_CMAKE_FIND_LIBRARY_SUFFIXES)
 
+find_package(PythonInterp 3 REQUIRED)
+
+add_custom_target(
+ operators ALL
+ COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/assemble.py ${CMAKE_CURRENT_SOURCE_DIR}
+ BYPRODUCTS src/runtime/operators/**
+ COMMENT "Generating operators"
+)
+
+add_dependencies(bismuth operators)
+
 install(TARGETS bismuth)
