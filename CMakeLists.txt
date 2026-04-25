@@ -31,8 +31,8 @@ find_package(PythonInterp 3 REQUIRED)
 add_custom_target(
  operators ALL
  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/assemble.py ${CMAKE_CURRENT_SOURCE_DIR}
- BYPRODUCTS src/runtime/operators/**
- COMMENT "Generating operators"
+ BYPRODUCTS src/runtime/operators.cpp
+ COMMENT "Generating operators.cpp"
 )
 
 add_dependencies(bismuth operators)

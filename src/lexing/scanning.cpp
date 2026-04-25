@@ -27,7 +27,7 @@ struct Scanner {
 	function<Step(Token*, Token*, vector<Token>*, bool)> parse;
 };
 
-unordered_map<Mark, Scanner> Scanners = {
+tsl::ordered_map<Mark, Scanner> Scanners = {
 	{
 		Mark::End,
 		Scanner {

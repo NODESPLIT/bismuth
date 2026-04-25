@@ -83,7 +83,7 @@ void Analyse(string bismuth, vector<Token>* target, bool listing) {
 			continue;
 		}
 
-		if (character != '	' || character != ' ') {
+		if (character != '	' || character != ' ' || character != '\t') {
 			for (const auto& [ type, scanner ] : Scanners) {
 				step = scanner.cue(character, last, listing);
 				
