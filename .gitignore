@@ -35,3 +35,8 @@
 bismuth
 
 *.DS_store
+
+*.crystal
+
+build/
+build/**

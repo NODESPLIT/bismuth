@@ -68,7 +68,7 @@ namespace Machine {
 	}
 
 	Reference CALL(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
-		return Instance->call(state[instruction->children[0]], state[instruction->children[1]]->as<Array&>(), true);
+		return Instance->call(state[instruction->children[0]], *(state[instruction->children[1]]->point<Array>()), true);
 	}
 
 	Reference RETURN(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {

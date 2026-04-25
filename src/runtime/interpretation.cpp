@@ -27,8 +27,14 @@ Reference load(string path, Reference in=nullptr, Scope scope=nullptr) {
 }
 
 Reference import(string path, Reference in=nullptr) {
+	if (path.ends_with(".crystal")) {
+		Crystals.push_back(boost::dll::import_symbol<Bismuth::API>(path, "crystal"));
+		return Crystals.back()->construct();
+	}
+
 	Scope subscope = branched();
 	std::filesystem::path base((*scopes.top())[Symbol::Context]->get("path")->as<string>()); base.remove_filename();
+
 	return load(base / path, in, subscope);
 }
 

@@ -1,112 +1,111 @@
 Runtime* Instance;
+vector<shared_ptr<Bismuth::API>> Crystals;
 
-struct Symbol {
-	inline static const string Context = "#";
-	inline static const string Instance = "@";
-};
+void Runtime::Log(Scope scope, int depth) {
+	for (const auto& [ name, variable ] : *scope) {
+		cout << variable->describe(depth, name + "[" + Names::Types[variable->type] + "]: ") << endl;
+	}
+}
 
-class Runtime {
-	public:
-		#include "interpretation.cpp"
+Runtime::Runtime() { Bindings::Bind(this); init(global); }
+Runtime::Runtime(string path, Reference in) { Bindings::Bind(this); result = load(path, in, global); }
 
-		vector<string> words;
-		vector<Reference> literals;
-		vector<vector<int>> relations;
+Reference Runtime::load(string path, Reference in, Scope scope) {
+	path = Search::Path(path);
 
-		stack<Scope> scopes;
-		Scope environment = Scope(new Table());
-		Scope global = Scope(new Table());
+	if (!scope) scope = global;
+	init(scope, path, in);
 
-		Reference result;
-		bool returned = false;
+	ifstream stream = ifstream(path);
+	
+	if (!stream.good()) return Value::Empty();
+	string bismuth((istreambuf_iterator<char>(stream)), istreambuf_iterator<char>());
 
-		Runtime() { Bindings::Bind(this); init(global); }
-		Runtime(string path, Reference in=nullptr) { Bindings::Bind(this); result = load(path, in, global); }
+	if (Bismuth::Verbose) {
+		cout << "\n\n--- Bismuth[" << path << "] ---" << endl;
+		cout << endl << bismuth << endl;
+	}
 
-		void init(Scope scope, string path="./", Reference in=nullptr) {
-			(*scope)[Symbol::Context] = Value::Lock(Value::Empty(Type::Table));
-			(*scope)[Symbol::Context]->SET("path", Value::Lock(Value::Make(path)));
-			(*scope)[Symbol::Context]->SET("in", in ? Value::Lock(Value::Copy(in)) : Value::Empty());
-			scopes.push(scope);
-		}
+	Reference result = interpret(bismuth);
 
-		Scope branched(Scope origin=nullptr, Table initial={}) {
-			if (origin) {
-				Scope branch = boost::make_shared<Table>(*origin);
-				(*branch)[Symbol::Context] = Value::Empty(Type::Table);
-				for (const auto& [ name, variable ] : (*origin)[Symbol::Context]->as<Table&>()) (*branch)[Symbol::Context]->SET(name, Value::Copy(variable));
-				return branch;
-			}
+	scopes.pop();
+	return result;
+}
 
-			return Scope(new Table());
-		}
+Reference Runtime::import(string path, Reference in) {
+	if (path.ends_with(".crystal")) {
+		Crystals.push_back(boost::dll::import_symbol<Bismuth::API>(path, "crystal"));
+		return Crystals.back()->construct(Instance);
+	}
 
-		Reference call(Reference value, bool branch=true) { return call(value, {}, branch); }
-		Reference call(Reference value, Array values, bool branch=true) {
-			shared_ptr<Block> block = value->block;
-			if (block->binding) return block->binding(values);
+	Scope subscope = branched();
+	std::filesystem::path base((*scopes.top())[Symbol::Context]->get("path")->as<string>()); base.remove_filename();
 
-			scopes.push(branch ? branched(value->context) : value->context);
+	return load(base / path, in, subscope);
+}
 
-			Reference arguments = Value::Lock(Value::Empty(Type::Array));
-			int argument = 0;
+Reference Runtime::interpret(string bismuth) {
+	vector<Token> tokens;
+	Analyse(bismuth, &tokens);
 
-			for (int i = 0; i < block->arguments.size(); i++) {
-				if (i >= values.size() || values[i]->is(Type::Void)) {
-					Reference defaulting = run(block->defaults[i]);
-					(*scopes.top())[block->arguments[i]] = defaulting;
-					arguments->SET(argument, Value::Copy(defaulting));
-				} else {
-					(*scopes.top())[block->arguments[i]] = Value::Copy(values[i]);
-					arguments->SET(argument, Value::Copy(values[i]));
-				}
+	if (Bismuth::Verbose) {
+		cout << "\n\n--- Tokens ---\n" << endl;
+		Token::Log(&tokens);
+	}
 
-				argument++;
-			}
+	return interpret(&tokens);
+}
 
-			for (int i = argument; i < values.size(); i++) arguments->SET(i, Value::Copy(values[i]));
-			(*scopes.top())[Symbol::Context]->SET("args", arguments);
+Reference Runtime::interpret(vector<Token>* tokens) {
+	vector<Node> tree;
+	Parse(tokens, &tree);
 
-			if (value->container) (*scopes.top())[Symbol::Instance] = value->container;
+	if (Bismuth::Verbose) {
+		cout << "\n\n--- Tree ---\n" << endl;
+		Node::Log(&tree);
+	}
 
-			Reference result = run(block->body, branch);
-			scopes.pop();
+	return interpret(&tree);
+}
 
-			return Value::Copy(result);
-		}
+Reference Runtime::interpret(vector<Node>* tree) {
+	vector<Instruction> instructions;
+	Machine::Compile(this, tree, &instructions);
 
-		Reference run(vector<Instruction> instructions, bool returns=false) {
-			// cout << "Running:" << endl;
-			// Machine::Log(this, &instructions);
+	if (Bismuth::Verbose) {
+		cout << "\n\n--- Instructions ---\n" << endl;
+		Machine::Log(this, &instructions);
+		cout << endl;
+	}
 
-			Reference state[instructions.size()];
-			Reference last = Value::Empty();
+	Instance = this;
+	Reference result = run(instructions);
+	
+	if (Bismuth::Verbose) {
+		cout << "\n\n--- Result ---\n" << endl;
+		cout << result->describe() << endl << endl;
+		cout << "\n--- Globals ---\n" << endl;
+		Log(global);
+		cout << endl << endl;
+	}
 
-			Cursor cursor;
-			while (cursor.position < instructions.size()) {
-				// cout << "CURSOR: " << cursor.position << endl;
-				Instruction* instruction = &instructions[cursor.position];
+	return result;
+}
 
-				if (instruction->wire) {
-					last = instruction->wire(state, instruction, last, &cursor);
-					state[cursor.position] = last;
-					if (returned) {
-						if (returns) returned = false;
-						return last;
-					}
-				} else {
-					cursor.jump = instruction->mode;
-				}
+void Runtime::init(Scope scope, string path, Reference in) {
+	(*scope)[Symbol::Context] = Value::Lock(Value::Empty(Type::Table));
+	(*scope)[Symbol::Context]->SET("path", Value::Lock(Value::Make(path)));
+	(*scope)[Symbol::Context]->SET("in", in ? Value::Lock(Value::Copy(in)) : Value::Empty());
+	scopes.push(scope);
+}
 
-				if (cursor.go > -1) {
-					cursor.position = cursor.go;
-					cursor.go = -1;
-				} else {
-					cursor.position += cursor.jump + 1;
-					cursor.jump = 0;
-				}
-			}
+Scope Runtime::branched(Scope origin, Table initial) {
+	if (origin) {
+		Scope branch = make_shared<Table>(*origin);
+		(*branch)[Symbol::Context] = Value::Empty(Type::Table);
+		for (const auto& [ name, variable ] : *((*origin)[Symbol::Context]->point<Table>())) (*branch)[Symbol::Context]->SET(name, Value::Copy(variable));
+		return branch;
+	}
 
-			return last;
-		}
-};
+	return Scope(new Table());
+}

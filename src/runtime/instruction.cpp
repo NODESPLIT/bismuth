@@ -1,22 +1,8 @@
-typedef function<Reference(Reference, Reference)> Transform;
-typedef unordered_map<Type, unordered_map<Type, Transform>> Transforms;
-
 class Runtime;
 namespace Bindings { void Bind(Runtime* runtime); }
 namespace Operate { extern unordered_map<string, int> Reduced; }
 
-struct Cursor {
-	int position = 0;
-	int jump = 0;
-	int go = -1;
-};
-
-typedef Reference (*Operation)(Reference[], Instruction*, Reference, Cursor*);
-
-struct Instruction {
-	Operation wire;
-	int mode; int children[2] = { -1, -1 };
-};
+#include "instruction.hpp"
 
 namespace Machine {
 	Reference VALUE(Reference state[], Instruction* instruction, Reference last, Cursor* cursor);

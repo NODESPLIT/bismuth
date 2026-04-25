@@ -2,48 +2,21 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
-#include <string>
 #include <fstream>
 #include <streambuf>
-#include <regex>
+#include <filesystem>
 
-#include <stack>
+#include <boost/dll.hpp>
 
-#include <boost/algorithm/string.hpp>
-#include <boost/unordered_map.hpp>
-#include <boost/container/vector.hpp>
-
-#include <tsl/ordered_map.h>
-
-#include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
-
-#include <boost/any.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 
-namespace algorithm = boost::algorithm;
-
-template <class L, class R> using unordered_map = boost::unordered_map<L, R>;
-template <class T> using vector = boost::container::vector<T>;
-template <class L, class R> using tuple = boost::tuple<L, R>;
-
-using namespace std::filesystem;
-
-using std::stack;
-using std::function;
-using std::string;
-using std::stringstream;
-using std::numeric_limits;
 using std::istreambuf_iterator;
 using std::ifstream;
-using std::regex;
 using std::cout;
 using std::endl;
 
-using boost::shared_ptr;
-using boost::make_tuple;
-using boost::any;
+#include "bismuth.hpp"
 
 vector<string> split(string text, string search) {
 	vector<string> parts;
@@ -59,15 +32,6 @@ namespace Bismuth {
 	const string Index = "index";
 
 	bool Verbose = false;
-
-	namespace Utils {
-		regex Flatten(R"(\s+)");
-		string Indent(int depth) {
-			string indentation = "";
-			for (int i = 0; i < depth; i++) indentation += "  ";
-			return indentation;
-		}
-	};
 
 	namespace Search {
 		static string File(string path) {
@@ -108,6 +72,8 @@ namespace Bismuth {
 
 	#include "runtime/value.cpp"
 	#include "runtime/instruction.cpp"
+	#include "crystal/api.hpp"
+	#include "runtime/runtime.hpp"
 	#include "runtime/runtime.cpp"
 	#include "runtime/compilation.cpp"
 	#include "runtime/operators.cpp"
