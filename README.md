@@ -9,10 +9,10 @@ You can check out the scripts folder for a collection of examples of the languag
 
 Make sure you have following dependencies installed:
 
-- tcmalloc_minimal (https://github.com/google/tcmalloc - there's often a package for tcmalloc_minimal, like debian has `libtcmalloc-minimal4` or for mac os `brew install gperftools`, this is optional but drastically improves performance)
-- tsl::ordered_map (https://github.com/Tessil/ordered-map - clone and do `mkdir build && cd build && cmake .. && make && sudo make install` in the root directory)
-- linenoise (https://github.com/arangodb/linenoise-ng - follow the cmake install instructions)
-- boost (with filesystem) >= 1.74.0
+- `tcmalloc_minimal` (https://github.com/google/tcmalloc - there's often a package for tcmalloc_minimal, like debian has `libtcmalloc-minimal4` or for mac os `brew install gperftools`, this is optional but drastically improves performance)
+- `tsl::ordered_map` (https://github.com/Tessil/ordered-map - clone and do `mkdir build && cd build && cmake .. && make && sudo make install` in the root directory)
+- `linenoise` (https://github.com/arangodb/linenoise-ng - follow the cmake install instructions)
+- `boost (with filesystem)` >= 1.74.0
 
 Then simply clone the repo and do the CMake shuffle:
 ```
@@ -97,15 +97,15 @@ import('path/to/file.crystal') // imports and constructs the dynamic library, pr
 
 The `@` symbol points to the current called blocks container, this allows for something akin to minimal OOP where a block can return an object containing instance methods and values where the methods can read and write the object easily.
 ```
-	Class = [value] {
-		{
-			value,
-			method: []{ log(@.value) }
-		}
+Class = [value] {
+	{
+		value,
+		method: []{ log(@.value) }
 	}
+}
 
-	instance = Class('nice!')
-	instance.method()
+instance = Class('nice!')
+instance.method()
 ```
 `=> nice!`
 
