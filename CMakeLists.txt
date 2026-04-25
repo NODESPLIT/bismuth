@@ -10,12 +10,12 @@ find_package(Boost 1.74.0 REQUIRED COMPONENTS filesystem)
 find_package(tsl-ordered-map REQUIRED)
 
 find_library(linenoise "linenoise" REQUIRED)
-find_library(tcmalloc "tcmalloc" REQUIRED)
+find_library(tcmalloc_minimal "tcmalloc_minimal" REQUIRED)
 
 add_executable(bismuth)
 
 target_sources(bismuth PRIVATE main.cpp)
-target_link_libraries(bismuth PRIVATE tsl::ordered_map linenoise Boost::filesystem tcmalloc)
+target_link_libraries(bismuth PRIVATE tsl::ordered_map linenoise Boost::filesystem tcmalloc_minimal)
 
 add_compile_options(-Wall -O3 -fomit-frame-pointer -fnew-alignment)
 
