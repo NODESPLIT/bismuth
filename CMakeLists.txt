@@ -6,14 +6,16 @@ if(POLICY CMP0167)
   cmake_policy(SET CMP0167 NEW)
 endif()
 
-find_package(Boost REQUIRED COMPONENTS filesystem)
+find_package(Boost 1.74.0 REQUIRED COMPONENTS filesystem)
+find_package(tsl-ordered-map REQUIRED)
+
 find_library(linenoise "linenoise" REQUIRED)
-# find_library(tcmalloc "tcmalloc" REQUIRED)
+find_library(tcmalloc "tcmalloc" REQUIRED)
 
 add_executable(bismuth)
 
 target_sources(bismuth PRIVATE main.cpp)
-target_link_libraries(bismuth PRIVATE linenoise Boost::filesystem)
+target_link_libraries(bismuth PRIVATE tsl::ordered_map linenoise Boost::filesystem tcmalloc)
 
 add_compile_options(-Wall -O3 -fomit-frame-pointer -fnew-alignment)
 

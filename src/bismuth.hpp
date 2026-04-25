@@ -1,7 +1,6 @@
 #include <string>
 #include <regex>
 #include <stack>
-#include <memory>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/container/vector.hpp>
@@ -11,6 +10,7 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
 
+#include <boost/shared_ptr.hpp>
 #include <boost/any.hpp>
 
 namespace algorithm = boost::algorithm;
@@ -28,7 +28,7 @@ using std::regex;
 using std::stack;
 
 using boost::make_tuple;
-using std::shared_ptr;
+using boost::shared_ptr;
 using boost::any;
 
 namespace Utils {

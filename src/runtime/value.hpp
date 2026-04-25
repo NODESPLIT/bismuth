@@ -135,8 +135,8 @@ class Value : public std::enable_shared_from_this<Value> {
 				if (index->is(Type::Range)) {
 					Range range = index->as<Range>();
 					
-					Number from = get<0>(range);
-					Number to = get<1>(range);
+					Number from = range.get<0>();
+					Number to = range.get<1>();
 
 					if (from < 0) from = from + array->size();
 					if (to < 0) to = to + array->size();
