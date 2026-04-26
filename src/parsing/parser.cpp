@@ -251,7 +251,8 @@ bool BranchList(vector<Token>* tokens, vector<Node>* target, bool nospread=false
 	bool spread = false;
 
 	for (int i = 0; i <= tokens->size(); i++) {
-		if (i < tokens->size() && (*tokens)[i].is(Mark::Operator, "*")) spread = true;
+		if (element.size() == 0 && i < tokens->size() && (*tokens)[i].is(Mark::Operator, "*")) spread = true;
+
 		if (i == tokens->size() || (*tokens)[i].is(Mark::Comma) || (*tokens)[i].is(Mark::End)) {
 			Branch(&element, target, 0, nullptr, nospread);
 			element.clear();
