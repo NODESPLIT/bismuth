@@ -1,0 +1,20 @@
+[ && ]
+
+( Any, Any ) :{
+	if (left->isTrue() && right->isTrue()) return Value::Copy(right);
+	return Value::Make(false);
+}:
+
+
+[ || ]
+
+( Any, Any ) :{
+	if (left->isTrue()) return Value::Copy(left);
+	if (!left->isTrue() && right->isTrue()) return Value::Copy(right);
+	return Value::Make(false);
+}:
+
+
+[ !_ ]
+
+( Any, Any ) :{ return Value::Make(!left->isTrue()); }:

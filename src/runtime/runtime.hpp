@@ -3,9 +3,22 @@ struct Symbol {
 	inline static const string Instance = "@";
 };
 
+struct State {
+	vector<Annotated>* instructions;
+	Cursor cursor;
+	Annotated* instruction() { return &(*instructions)[cursor.position]; }
+};
+
+struct Test {
+	string description;
+	bool passed;
+};
+
 class Runtime {
 	public:
 		static void Log(Scope scope, int depth=0);
+		static inline State Current;
+		static inline vector<Test> Tests;
 
 		vector<string> words;
 		vector<Reference> literals;
@@ -30,38 +43,44 @@ class Runtime {
 		void init(Scope scope, string path="./", Reference in=nullptr);
 		Scope branched(Scope origin=nullptr, Table initial={});
 
-		Reference run(vector<Instruction> instructions, bool returns=false) {
+		Reference run(vector<Annotated> annotated, bool returns=false) {
 			// cout << "Running:" << endl;
 			// Machine::Log(this, &instructions);
+
+			State saved = Current;
+			Current = State(&annotated);
+
+			vector<Instruction> instructions;
+			for (int i = 0; i < annotated.size(); i++) instructions.push_back(annotated[i]);
 
 			Reference state[instructions.size()];
 			Reference last = Value::Empty();
 
-			Cursor cursor;
-			while (cursor.position < instructions.size()) {
-				// cout << "CURSOR: " << cursor.position << endl;
-				Instruction* instruction = &instructions[cursor.position];
+			while (Current.cursor.position < instructions.size()) {
+				// cout << "CURSOR: " << Current.cursor.position << endl;
+				Instruction* instruction = &instructions[Current.cursor.position];
 
 				if (instruction->wire) {
-					last = instruction->wire(state, instruction, last, &cursor);
-					state[cursor.position] = last;
+					last = instruction->wire(state, instruction, last, &Current.cursor);
+					state[Current.cursor.position] = last;
 					if (returned) {
 						if (returns) returned = false;
 						return last;
 					}
 				} else {
-					cursor.jump = instruction->mode;
+					Current.cursor.jump = instruction->mode;
 				}
 
-				if (cursor.go > -1) {
-					cursor.position = cursor.go;
-					cursor.go = -1;
+				if (Current.cursor.go > -1) {
+					Current.cursor.position = Current.cursor.go;
+					Current.cursor.go = -1;
 				} else {
-					cursor.position += cursor.jump + 1;
-					cursor.jump = 0;
+					Current.cursor.position += Current.cursor.jump + 1;
+					Current.cursor.jump = 0;
 				}
 			}
 
+			Current = saved;
 			return last;
 		}
 
@@ -89,7 +108,13 @@ class Runtime {
 			}
 
 			for (int i = argument; i < values.size(); i++) arguments->SET(i, Value::Copy(values[i]));
+			
 			(*scopes.top())[Symbol::Context]->SET("args", arguments);
+			(*scopes.top())[Symbol::Context]->SET("called", value);
+
+			Reference call = Value::Lock(Value::Empty(Type::Table));
+			call->descriptor = Current.instruction()->descriptor;
+			(*scopes.top())[Symbol::Context]->SET("call", call);
 
 			if (value->container) (*scopes.top())[Symbol::Instance] = value->container;
 

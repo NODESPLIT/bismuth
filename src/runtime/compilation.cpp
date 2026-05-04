@@ -1,7 +1,7 @@
 namespace Machine {
-	void Log(Runtime* runtime, vector<Instruction>* instructions) {
+	void Log(Runtime* runtime, vector<Annotated>* instructions) {
 		for (int i = 0; i < instructions->size(); i++) {
-			Instruction* instruction = &(*instructions)[i];
+			Annotated* instruction = &(*instructions)[i];
 
 			Operation wire = instruction->wire;
 			int mode = instruction->mode;
@@ -27,15 +27,21 @@ namespace Machine {
 				description += " ]>";
 			}
 
+			// if (!instruction->descriptor.empty()) description += " // " + instruction->descriptor;
 			cout << description << endl;
 		}
 	}
 
-	vector<int> Link(Runtime* runtime, vector<Node>* tree, vector<Instruction>* instructions, int offset = 0) {
+	vector<int> Link(Runtime* runtime, vector<Node>* tree, vector<Annotated>* instructions, int offset = 0) {
 		vector<int> children;
+
+		string valueDescriptor = Value::Descriptor;
+		string annotatedDescriptor = Annotated::Descriptor;
 
 		for (int i = tree->size() - 1; i >= 0; i--) {
 			Node* node = &(*tree)[i];
+			Value::Descriptor = Annotated::Descriptor = node->descriptor;
+
 			Task task = node->task;
 
 			Operation wire = task == Task::End ? nullptr : Machine::Wiring[task];
@@ -58,7 +64,7 @@ namespace Machine {
 				if (Operate::Reduced.count(node->contents)) mode = Operate::Reduced[node->contents];
 			}
 
-			Instruction instruction = Instruction{ wire, mode };
+			Annotated instruction = Annotated{ wire, mode };
 
 			if (task == Task::Block) {
 				vector<Node> head;
@@ -171,16 +177,16 @@ namespace Machine {
 			}
 
 			if (task == Task::Decide) {
-				vector<Instruction> statement;
+				vector<Annotated> statement;
 				for (int i = node->children.size() - 2; i >= 0; i -= 2) {
 					int steps = statement.size();
 
-					if (i < node->children.size() - 2) statement.push_back(Instruction{ Machine::Wiring[Task::Jump] });
+					if (i < node->children.size() - 2) statement.push_back(Annotated{ Machine::Wiring[Task::Jump] });
 					Link(runtime, &node->children[i + 1].children, &statement, instructions->size() + offset);
 
 					steps = statement.size() - steps;
 
-					Instruction decide = Instruction{ wire };
+					Annotated decide = Annotated{ wire };
 					decide.mode = steps;
 					statement.push_back(decide);
 
@@ -211,15 +217,18 @@ namespace Machine {
 			}
 		}
 
+		Value::Descriptor = valueDescriptor;
+		Annotated::Descriptor = annotatedDescriptor;
+
 		return children;
 	}
 
-	void Compile(Runtime* runtime, vector<Node>* tree, vector<Instruction>* instructions) {
-		vector<Instruction> reverse;
+	void Compile(Runtime* runtime, vector<Node>* tree, vector<Annotated>* instructions) {
+		vector<Annotated> reverse;
 		Link(runtime, tree, &reverse);
 
 		for (int i = reverse.size() - 1; i >= 0; i--) {
-			Instruction real = reverse[i];
+			Annotated real = reverse[i];
 
 			if (real.wire == Machine::Wiring[Task::Array] || real.wire == Machine::Wiring[Task::Table]) {
 				for (int r = 0; r < runtime->relations[real.children[0]].size(); r++) {

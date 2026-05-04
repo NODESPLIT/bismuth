@@ -11,6 +11,7 @@ Make sure you have following dependencies installed:
 
 - `tcmalloc_minimal` (https://github.com/google/tcmalloc - there's often a package for tcmalloc_minimal, like debian has `libtcmalloc-minimal4` or for mac os `brew install gperftools`, this is optional but drastically improves performance)
 - `tsl::ordered_map` (https://github.com/Tessil/ordered-map - clone and do `mkdir build && cd build && cmake .. && make && sudo make install` in the root directory)
+- `textflowcpp` (https://github.com/catchorg/textflowcpp - clone this repo and install the file TextFlow.hpp somewhere in your path like `/usr/local/include`)
 - `linenoise` (https://github.com/arangodb/linenoise-ng - follow the cmake install instructions)
 - `boost (with filesystem)` >= 1.74.0
 
@@ -28,6 +29,7 @@ Some flags you can give to the runtime:
 - `-r` / `--repl` : force load the repl
 - `-q` / `--quiet` : silence all terminal output
 - `-v` / `--verbose` : describe all steps of loading and running of the given file
+- `-t` / `--test` : run all tests in given script or every script deep in given path
 
 ## Fundementals
 

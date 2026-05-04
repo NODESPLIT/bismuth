@@ -6,7 +6,8 @@ int main(int argc, char *argv[]) {
 	unordered_map<string, bool> flags = {
 		{ "-v", false }, { "--verbose", false },
 		{ "-r", false }, { "--repl", false },
-		{ "-q", false }, { "--quiet", false }
+		{ "-q", false }, { "--quiet", false },
+		{ "-t", false }, { "--test", false }
 	};
 
 	string path = "./";
@@ -21,13 +22,20 @@ int main(int argc, char *argv[]) {
 	bool repl = flags["-r"] || flags["--repl"];
 	bool quiet = flags["-q"] || flags["--quiet"];
 	Bismuth::Verbose = flags["-v"] || flags["--verbose"];
+	Bismuth::Testing = flags["-t"] || flags["--test"];
 
 	if (repl || ( args.size() <= 1 && !Bismuth::Exists(path) )) {
 		Bismuth::Repl();
 	} else {
 		if (Bismuth::Exists(path)) {
 			Bismuth::Runtime runtime = Bismuth::Runtime(path);
-			if (!quiet && !Bismuth::Verbose && !runtime.result->is(Bismuth::Type::Void)) cout << runtime.result->describe() << endl;
+			if (!quiet && !Bismuth::Verbose && !Bismuth::Testing && !runtime.result->is(Bismuth::Type::Void)) cout << runtime.result->describe() << endl;
+		} else if (std::filesystem::is_directory(path)) {
+			cout << endl;
+			for (const std::filesystem::directory_entry& entry : std::filesystem::recursive_directory_iterator(path)) {
+				string child = entry.path().string();
+        if (Bismuth::Exists(child)) Bismuth::Runtime runtime = Bismuth::Runtime(child);
+	    }
 		} else {
 			cout << "Bismuth '" << path << "' not found" << endl;
 		}

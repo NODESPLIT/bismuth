@@ -1,5 +1,7 @@
 class Token {
 	public:
+		static inline string Descriptor = "";
+
 		static void Log(vector<Token>* tokens, int depth = 0) {
 			for (auto &token : *tokens) {
 				cout << Utils::Indent(depth);
@@ -30,14 +32,39 @@ class Token {
 		bool isnt(Mark mark, string contents) { return !is(mark, contents); }
 		bool isnt(Mark mark, vector<string> contents) { return !is(mark, contents); }
 
+		void swap(Token* with) {
+			mark = with->mark;
+			descriptor = with->descriptor;
+			contents = with->contents;
+			children = {};
+			for (int i = 0; i < with->children.size(); i++) {
+				children[i] = {};
+				for (int t = 0; t < with->children[i].size(); t++) children[i].push_back(Token(&children[i][t]));
+			}
+		}
+
 		string describe() { return "<" + Names::Mark[mark] + "> |" + regex_replace(contents, Utils::Flatten, " ") + "|";  };
+
+		Token detail(string descriptor) {
+			Token change = Token(this);
+			change.descriptor = descriptor;
+			return change;
+		}
 
 		vector<vector<Token>> children;
 		
 		Mark mark = Mark::End;
+		string descriptor = Descriptor;
 		string contents = "";
 
 		Token(){}
+		Token(Token* origin) {
+			mark = origin->mark;
+			descriptor = origin->descriptor;
+			contents = origin->contents;
+			children = origin->children;
+		}
+
 		Token(Mark mark) { this->mark = mark; }
 		
 		Token(Mark mark, string contents) {

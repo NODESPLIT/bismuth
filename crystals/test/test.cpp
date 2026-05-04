@@ -1,7 +1,7 @@
 #include "../../src/crystal/body.hpp"
 #include <iostream>
 
-class Test final: public API {
+class Testing final: public API {
   public:
     Reference construct() override {
       Reference output = Value::Empty(Type::Table);
@@ -24,5 +24,5 @@ class Test final: public API {
     }
 };
 
-extern "C" BOOST_SYMBOL_EXPORT Test crystal;
-Test crystal;
+extern "C" BOOST_SYMBOL_EXPORT Testing crystal;
+Testing crystal;

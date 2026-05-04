@@ -9,7 +9,7 @@ class Repl {
 			printf("\x1b[1;31m%s\x1b[0m\n", Bismuth::Stamp.c_str());
 
 			while (1) {
-		    char* result = linenoise("\x1b[1;28m$>\x1b[0m ");
+		    char* result = linenoise("\x1b[1;28m@>\x1b[0m ");
 
 		    if (result == NULL) {
 		    	break;

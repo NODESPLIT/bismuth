@@ -1,4 +1,5 @@
 #include <linenoise.h>
+#include <TextFlow.hpp>
 #include <algorithm>
 #include <iostream>
 #include <sstream>
@@ -18,24 +19,23 @@ using std::endl;
 
 #include "bismuth.hpp"
 
-vector<string> split(string text, string search) {
-	vector<string> parts;
-	algorithm::split(parts, text, algorithm::is_any_of(search));
-	return parts;
-};
-
 namespace Bismuth {
 	const string Name = "bismuth";
 	const string Version = "0.0.1";
 	const string Stamp = string(Name) + " v" + string(Version);
 	const vector<string> Extensions = { "bi", "bis" };
 	const string Index = "index";
+	string Header;
 
 	bool Verbose = false;
+	bool Testing = false;
 
 	namespace Search {
 		static string File(string path) {
-			if (std::filesystem::is_regular_file(path)) return path;
+			if (std::filesystem::is_regular_file(path)) {
+				for (int i = 0; i < Extensions.size(); i++) if (std::filesystem::path(path).extension().string() == "." + Extensions[i]) return path;
+				return "";
+			}
 
 			for (int i = 0; i < Extensions.size(); i++) {
 				path = path + "." + Extensions[i];

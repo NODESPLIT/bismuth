@@ -1,6 +1,8 @@
 int Destructured = 0;
 
 void Destructure(Node* parent, vector<Node>* output, Node source, vector<string> path = {}) {
+	Node::Descriptor = parent->descriptor;
+	
 	if (parent->task == Task::Table) {
 		for (int i = 0; i < parent->children.size(); i += 2) {
 			Node key = parent->children[i];
@@ -126,6 +128,7 @@ void Destructure(Node* parent, vector<Node>* output, Node source, vector<string>
 }
 
 Node Spread(Node origin) {
+	Node::Descriptor = origin.descriptor;
 	Node output = Node(origin.task, origin.mark);
 
 	if (origin.task == Task::Table) {
@@ -268,6 +271,9 @@ void Branch(vector<Token>* tokens, vector<Node>* target, int position, Node* lef
 	Token* left = Read(tokens, position); if (!left || left->is(Mark::End)) return;
 	Token* middle = Read(tokens, position + 1);
 
+	Token::Descriptor = left->descriptor;
+	Node::Descriptor = left->descriptor;
+
 	if (left->is(Mark::Word, "return")) {
 		Node node = Node{ Task::Return };
 		Branch(tokens, &node.children, position + 1);
@@ -309,11 +315,11 @@ void Branch(vector<Token>* tokens, vector<Node>* target, int position, Node* lef
 							defining = false;
 							spreading = false;
 						} else if (part.size() > 0) {
-							vector<Token> name = { Token{ Mark::String, part[part.size() - 1].contents } };
+							vector<Token> name = { Token( Mark::String, part[part.size() - 1].contents ) };
 							
 							Branch(&name, &node.children, 0, nullptr, true);
 							if (i == left->children[0].size() || left->children[0][i].is(Mark::Comma) || left->children[0][i].is(Mark::End)) {
-								vector<Token> destructure = { Token{ Mark::Word, part[part.size() - 1].contents } };
+								vector<Token> destructure = { Token( Mark::Word, part[part.size() - 1].contents ) };
 								Branch(&destructure, &node.children, 0, nullptr, true);
 							}
 							
@@ -344,7 +350,11 @@ void Branch(vector<Token>* tokens, vector<Node>* target, int position, Node* lef
 								Branch(&argument, &arguments.children, 0, nullptr, true);
 							}
 
-							if (defaults.empty() || spreading) defaults.push_back(Token(Mark::Word, "void"));
+							if (defaults.empty() || spreading) {
+								Token part = Token(Mark::Word, "void");
+								defaults.push_back(part);
+							}
+
 							Branch(&defaults, &arguments.children);
 						}
 
@@ -389,6 +399,7 @@ void Branch(vector<Token>* tokens, vector<Node>* target, int position, Node* lef
 
 				for (int i = 0; i < left->children.size(); i += 2) {
 					vector<Token> question = left->children[i];
+					
 					if (question.empty()) question = { Token(Mark::Word, "true") };
 
 					vector<Token> answer = left->children[i + 1];
@@ -407,6 +418,7 @@ void Branch(vector<Token>* tokens, vector<Node>* target, int position, Node* lef
 				Branch(&left->children[0], &node.children);
 
 				Node arguments = Node{ Task::Array, Mark::Array };
+
 				bool spread = BranchList(&left->children[1], &arguments.children);
 				node.children.push_back(spread && !nospread ? Spread(arguments) : arguments);
 
@@ -475,12 +487,7 @@ void Branch(vector<Token>* tokens, vector<Node>* target, int position, Node* lef
 						)
 					);
 
-					source = Node(
-						Task::Read,
-						Mark::Word,
-						alias
-					);
-
+					source = Node(Task::Read, Mark::Word, alias);
 		      Destructure(&node.children[0], target, source);
 
 		      target->push_back(

@@ -11,11 +11,13 @@ typedef tsl::ordered_map<string, Reference> Table;
 typedef shared_ptr<Table> Scope;
 
 struct Instruction;
+struct Annotated;
+
 class Block {
 	public:
 		vector<string> arguments;
-		vector<vector<Instruction>> defaults;
-		vector<Instruction> body;
+		vector<vector<Annotated>> defaults;
+		vector<Annotated> body;
 
 		function<Reference(Array)> binding = nullptr;
 
@@ -23,7 +25,7 @@ class Block {
 
 		Block(){}
 		Block(function<Reference(Array)> binding) { this->binding = binding; }
-		Block(vector<string> arguments, vector<vector<Instruction>> defaults, vector<Instruction> body){
+		Block(vector<string> arguments, vector<vector<Annotated>> defaults, vector<Annotated> body){
 			this->arguments = arguments;
 			this->defaults = defaults;
 			this->body = body;
@@ -32,6 +34,8 @@ class Block {
 
 class Value : public std::enable_shared_from_this<Value> {
 	public:
+		static inline string Descriptor = "";
+
 		template <class T> static Reference Make(T one) { return Reference(new Value(one)); }
 		template <class T1, class T2> static Reference Make(T1 one, T2 two) { return Reference(new Value(one, two)); }
 
@@ -107,6 +111,7 @@ class Value : public std::enable_shared_from_this<Value> {
 			if (index->is(Type::String)) {
 				String key = index->as<String>();
 				if (key == "type") return Value::Make(Names::Types[type]);
+				if (key == "descriptor") return Value::Make(descriptor);
 
 				if (is(Type::String)) {
 					return Value::Make(int(as<String>().size()));
@@ -179,6 +184,7 @@ class Value : public std::enable_shared_from_this<Value> {
 			value = to->value;
 			block = to->block;
 			context = to->context;
+			descriptor = to->descriptor;
 		}
 
 		void set(int index, Reference to, bool force=false) {
@@ -240,6 +246,7 @@ class Value : public std::enable_shared_from_this<Value> {
 				if (type == Type::Number) return as<Number>() == other->as<Number>();
 				if (type == Type::Range) return as<Range>() == other->as<Range>();
 				if (type == Type::String) return as<String>().compare(other->as<String>()) == 0;
+				if (type == Type::Array || type == Type::Table) return describe() == other->describe();
 				if (type == Type::Block) return block == other->block;
 			}
 
@@ -342,6 +349,7 @@ class Value : public std::enable_shared_from_this<Value> {
 
 		bool immutable = false;
 		Type type = Type::Void;
+		string descriptor = Descriptor;
 		shared_ptr<Block> block;
 		Reference container;
 		Scope context;

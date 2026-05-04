@@ -68,7 +68,7 @@
 
 [ / ]
 ( Number, Number ) :{ return Value::Make(left->as<Number>() / right->as<Number>()); }:
-( String, String ) :{ return Value::Make(split(left->as<String>(), right->as<String>())); }:
+( String, String ) :{ return Value::Make(Utils::Split(left->as<String>(), right->as<String>())); }:
 
 [ % ]
 ( Number, Number ) :{ return Value::Make(fmod(left->as<Number>(), right->as<Number>())); }:

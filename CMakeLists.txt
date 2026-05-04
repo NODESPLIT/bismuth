@@ -37,4 +37,6 @@ add_custom_target(
 
 add_dependencies(bismuth operators)
 
+add_custom_command(TARGET bismuth POST_BUILD COMMAND ./bismuth -t ../tests)
+
 install(TARGETS bismuth)

@@ -10,3 +10,8 @@ struct Instruction {
 	Operation wire;
 	int mode; int children[2] = { -1, -1 };
 };
+
+struct Annotated : Instruction {
+	static inline string Descriptor = "";
+	string descriptor = Descriptor;
+};

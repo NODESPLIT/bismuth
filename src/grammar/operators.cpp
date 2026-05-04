@@ -44,6 +44,9 @@ unordered_map<string, Operator> Operators = {
 	{ "|", Operator { 13, Pairing::Binary, Effect::Bitwise, Orientation::LeftToRight } },
 	{ "^", Operator { 12, Pairing::Binary, Effect::Bitwise, Orientation::LeftToRight } },
 	{ "~", Operator { 3, Pairing::Unary, Effect::Bitwise, Orientation::LeftToRight } },
+	{ "!", Operator { 3, Pairing::Unary, Effect::Logical, Orientation::LeftToRight } },
+	{ "&&", Operator { 11, Pairing::Binary, Effect::Logical, Orientation::LeftToRight } },
+	{ "||", Operator { 11, Pairing::Binary, Effect::Logical, Orientation::LeftToRight } },
 	{ "<<", Operator { 7, Pairing::Binary, Effect::Bitwise, Orientation::LeftToRight } },
 	{ ">>", Operator { 7, Pairing::Binary, Effect::Bitwise, Orientation::LeftToRight } }
 };
