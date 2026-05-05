@@ -1,6 +1,5 @@
 [ + ]
 ( Number, Number ) :{ return Value::Make(left->as<Number>() + right->as<Number>()); }:
-( Number, String ) :{ return Value::Make(left->describe() + right->as<String>()); }:
 ( String, String ) :{ return Value::Make(left->as<String>() + right->as<String>()); }:
 
 ( Array, Array ) :{

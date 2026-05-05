@@ -219,7 +219,7 @@ tsl::ordered_map<Mark, Scanner> Scanners = {
 	{
 		Mark::Call,
 		Scanner {
-			[](char character, Token* last, bool listing) { return last && last->isnt(vector<Mark>{ Mark::Operator }) && character == '(' ? Step::Start : Step::Next; },
+			[](char character, Token* last, bool listing) { return last && last->isnt(vector<Mark>{ Mark::Operator, Mark::Comma }) && character == '(' ? Step::Start : Step::Next; },
 			[](char character, Token* last, bool listing) { return character == '(' ? Step::Nest : character == ')' ? Step::Stop : Step::Next; },
 			[](Token* token, Token* last, vector<Token>* tokens, bool listing) {
 				if (last && !last->is(Mark::Call)) token->children.push_back({ *last });
