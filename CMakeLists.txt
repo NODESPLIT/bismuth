@@ -29,14 +29,20 @@ unset(OLD_CMAKE_FIND_LIBRARY_SUFFIXES)
 find_package(PythonInterp 3 REQUIRED)
 
 add_custom_target(
- operators ALL
- COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/assemble.py ${CMAKE_CURRENT_SOURCE_DIR}
- BYPRODUCTS src/runtime/operators.cpp
- COMMENT "Generating operators.cpp"
+  operators ALL
+  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/assemble.py ${CMAKE_CURRENT_SOURCE_DIR}
+  BYPRODUCTS src/runtime/operators.cpp
+  COMMENT "Generating operators.cpp"
 )
 
-add_dependencies(bismuth operators)
+add_custom_target(
+  crystal ALL
+  COMMAND /bin/bash -c "if [[ ! -e ${CMAKE_CURRENT_SOURCE_DIR}/tests/crystal/build ]]\; then cd ${CMAKE_CURRENT_SOURCE_DIR}/tests/crystal \\&\\& mkdir -p build \\&\\& cd build \\&\\& cmake .. \\&\\& make\; fi"
+  BYPRODUCTS tests/crystal/build/example.crystal
+  COMMENT "Compiling test crystal"
+)
+
+add_dependencies(bismuth operators crystal)
 
 add_custom_command(TARGET bismuth POST_BUILD COMMAND ./bismuth -t ../tests)
-
 install(TARGETS bismuth)

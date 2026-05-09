@@ -347,6 +347,20 @@ class Value : public std::enable_shared_from_this<Value> {
 			return before + "void";
 		}
 
+		enum class Comparison { Greater, GreaterOrEqual, Lesser, LesserOrEqual };
+		bool compare(Reference other, Comparison comparison) {
+			if (other->type != type) other = other->cast(type);
+			if ((comparison == Comparison::GreaterOrEqual || comparison == Comparison::LesserOrEqual) && equals(other)) return true;
+
+			bool greater = comparison == Comparison::Greater || comparison == Comparison::GreaterOrEqual; 
+			
+			if (type == Type::Boolean) return greater ? as<Boolean>() > other->as<Boolean>() : as<Boolean>() < other->as<Boolean>();
+			if (type == Type::Number) return greater ? as<Number>() > other->as<Number>() : as<Number>() < other->as<Number>();
+			if (type == Type::String) return greater ? as<String>() > other->as<String>() : as<String>() < other->as<String>();
+
+			return false;
+		}
+
 		bool immutable = false;
 		Type type = Type::Void;
 		string descriptor = Descriptor;

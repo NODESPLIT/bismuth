@@ -1,45 +1,50 @@
 #include "src/bismuth.cpp"
 
 int main(int argc, char *argv[]) {
-	vector<string> args(argv, argv + argc);
+  vector<string> args(argv, argv + argc);
 
-	unordered_map<string, bool> flags = {
-		{ "-v", false }, { "--verbose", false },
-		{ "-r", false }, { "--repl", false },
-		{ "-q", false }, { "--quiet", false },
-		{ "-t", false }, { "--test", false }
-	};
+  unordered_map<string, bool> flags = {
+    { "-v", false }, { "--verbose", false },
+    { "-r", false }, { "--repl", false },
+    { "-q", false }, { "--quiet", false },
+    { "-t", false }, { "--test", false }
+  };
 
-	string path = "./";
-	for (int i = 1; i < args.size(); i++) {
-		if (flags.count(args[i])) {
-			flags[args[i]] = true;
-		} else {
-			path = args[i];
-		}
-	}
+  string path = "./";
+  for (int i = 1; i < args.size(); i++) {
+    if (flags.count(args[i])) {
+      flags[args[i]] = true;
+    } else {
+      path = args[i];
+    }
+  }
 
-	bool repl = flags["-r"] || flags["--repl"];
-	bool quiet = flags["-q"] || flags["--quiet"];
-	Bismuth::Verbose = flags["-v"] || flags["--verbose"];
-	Bismuth::Testing = flags["-t"] || flags["--test"];
+  bool repl = flags["-r"] || flags["--repl"];
+  bool quiet = flags["-q"] || flags["--quiet"];
+  Bismuth::Verbose = flags["-v"] || flags["--verbose"];
+  Bismuth::Testing = flags["-t"] || flags["--test"];
 
-	if (repl || ( args.size() <= 1 && !Bismuth::Exists(path) )) {
-		Bismuth::Repl();
-	} else {
-		if (Bismuth::Exists(path)) {
-			Bismuth::Runtime runtime = Bismuth::Runtime(path);
-			if (!quiet && !Bismuth::Verbose && !Bismuth::Testing && !runtime.result->is(Bismuth::Type::Void)) cout << runtime.result->describe() << endl;
-		} else if (std::filesystem::is_directory(path)) {
-			cout << endl;
-			for (const std::filesystem::directory_entry& entry : std::filesystem::recursive_directory_iterator(path)) {
-				string child = entry.path().string();
-        if (Bismuth::Exists(child)) Bismuth::Runtime runtime = Bismuth::Runtime(child);
-	    }
-		} else {
-			cout << "Bismuth '" << path << "' not found" << endl;
-		}
-	}
+  if (repl || ( args.size() <= 1 && !Bismuth::Exists(path) )) {
+    Bismuth::Repl();
+  } else {
+    if (Bismuth::Exists(path)) {
+      Bismuth::Runtime runtime = Bismuth::Runtime(path);
+      if (!quiet && !Bismuth::Verbose && !Bismuth::Testing && !runtime.result->is(Bismuth::Type::Void)) cout << runtime.result->describe() << endl;
+    } else if (std::filesystem::is_directory(path)) {
+      vector<string> paths;
 
-	return EXIT_SUCCESS;
+      for (const std::filesystem::directory_entry& entry : std::filesystem::recursive_directory_iterator(path)) {
+        string child = entry.path().string();
+        if (Bismuth::Exists(child)) paths.push_back(child);
+      }
+
+      if (paths.size() > 1) cout << endl;
+      for (int i = 0; i < paths.size(); i++) Bismuth::Runtime runtime = Bismuth::Runtime(paths[i]);
+      if (paths.size() > 1) cout << endl;
+    } else {
+      cout << "Bismuth '" << path << "' not found" << endl;
+    }
+  }
+
+  return EXIT_SUCCESS;
 }

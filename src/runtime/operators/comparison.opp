@@ -1,14 +1,14 @@
-[ < ]
-( Number, Number ) :{ return Value::Make(left->as<Number>() < right->as<Number>()); }:
-
-[ <= ]
-( Number, Number ) :{ return Value::Make(left->as<Number>() <= right->as<Number>()); }:
-
 [ > ]
-( Number, Number ) :{ return Value::Make(left->as<Number>() > right->as<Number>()); }:
+( Any, Any ) :{ return Value::Make(left->compare(right, Value::Comparison::Greater)); }:
 
 [ >= ]
-( Number, Number ) :{ return Value::Make(left->as<Number>() >= right->as<Number>()); }:
+( Any, Any ) :{ return Value::Make(left->compare(right, Value::Comparison::GreaterOrEqual)); }:
+
+[ < ]
+( Any, Any ) :{ return Value::Make(left->compare(right, Value::Comparison::Lesser)); }:
+
+[ <= ]
+( Any, Any ) :{ return Value::Make(left->compare(right, Value::Comparison::LesserOrEqual)); }:
 
 [ == ]
 ( Any, Any ) :{ return Value::Make(left->equals(right)); }:

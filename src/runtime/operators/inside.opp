@@ -352,6 +352,33 @@
 }:
 
 
+[ ^>_ ]
+
+( Array, Any ) :{
+	Array output = Value::Copy(left)->as<Array>();
+	sort(output.begin(), output.end(), [](Reference left, Reference right){ return left->compare(right, Value::Comparison::Greater); });
+	return Value::Make(output);
+}:
+
+
+[ ^<_ ]
+
+( Array, Any ) :{
+	Array output = Value::Copy(left)->as<Array>();
+	sort(output.begin(), output.end(), [](Reference left, Reference right){ return left->compare(right, Value::Comparison::Lesser); });
+	return Value::Make(output);
+}:
+
+
+[ ^: ]
+
+( Array, Block ) :{
+	Array output = Value::Copy(left)->as<Array>();
+	sort(output.begin(), output.end(), [=](Reference a, Reference b){ return Instance->call(right, { Value::Copy(a), Value::Copy(b) }, false)->as<Boolean>(); });
+	return Value::Make(output);
+}:
+
+
 [ :: ]
 
 ( Array, Block ) :{

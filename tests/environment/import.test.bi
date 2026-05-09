@@ -17,6 +17,12 @@
 
 #.test(
 	'Import loads and runs a .crystal dynamic library',
-	[]{ import('../../crystals/draw/draw.crystal') },
-	[crystal]{ crystal.Window }
+	[]{
+		crystal = import('../crystal/build/example.crystal')
+		[ crystal.string, crystal.test() ]
+	},
+	[
+		'Nice!',
+		{ subtest: 200 }
+	]
 )

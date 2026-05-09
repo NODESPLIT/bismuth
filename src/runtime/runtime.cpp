@@ -38,7 +38,7 @@ Reference Runtime::load(string path, Reference in, Scope scope) {
 	scopes.pop();
 
 	if (Bismuth::Testing && Tests.size() > 0) {
-		cout << "\033[37m[ " << path << " ]\033[0m" << endl;
+		cout << "\n\033[37m[ " << path << " ]\033[0m" << endl;
 		cout << Utils::Boxed(Bismuth::Header, 68, 1, true, false) << endl << "\033[37m┊\033[0m" << endl;
 
 		bool passed = true;
