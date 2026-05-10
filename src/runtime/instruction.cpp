@@ -18,7 +18,7 @@ namespace Machine {
 	Reference CALL(Reference state[], Instruction* instruction, Reference last, Cursor* cursor);
 	Reference RETURN(Reference state[], Instruction* instruction, Reference last, Cursor* cursor);
 
-	void Log(Runtime* runtime, vector<Annotated>* instructions);
+	void Log(Runtime* runtime, vector<Annotated>* instructions, int depth = -1, string indent = " ");
 	void Compile(Runtime* runtime, vector<Node>* tree, vector<Annotated>* instructions);
 
 	extern unordered_map<Task, Operation> Wiring;

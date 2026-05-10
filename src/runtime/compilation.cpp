@@ -1,5 +1,7 @@
 namespace Machine {
-	void Log(Runtime* runtime, vector<Annotated>* instructions) {
+	void Log(Runtime* runtime, vector<Annotated>* instructions, int depth, string indent) {
+		size_t digits = int(log10(instructions->size() - 1)) + 1;
+
 		for (int i = 0; i < instructions->size(); i++) {
 			Annotated* instruction = &(*instructions)[i];
 
@@ -7,7 +9,10 @@ namespace Machine {
 			int mode = instruction->mode;
 			Task task = Machine::Tasks[wire];
 
-			string description = std::to_string(i) + "| <" + ( wire ? Names::Wiring[wire] : "JUMP" ) + ">";
+			string line = std::to_string(i);
+			line.insert(0, digits - line.size(), ' ');
+
+			string description = line + " " + ( i == 0 ? "┬" : i == instructions->size() - 1 ? "┴" : "┼" ) + " <" + ( wire ? Names::Wiring[wire] : "JUMP" ) + ">";
 
 			if (( task == Task::Value || task == Task::Array || task == Task::Table || task == Task::Block ) && mode > -1 && mode < runtime->literals.size()) description += ": " + regex_replace(runtime->literals[mode]->describe(), Utils::Flatten, " ");
 			if (task == Task::Read || ( task == Task::Delete && mode > -1 && mode < runtime->words.size() )) description += ": " + runtime->words[mode];
@@ -26,9 +31,22 @@ namespace Machine {
 
 				description += " ]>";
 			}
+			
+			string prefix = indent;
+			if (depth > -1) {
+				prefix = prefix.substr(0, prefix.size() - 4);
+				prefix += i == 0 ? "┌ " : i == instructions->size() - 1 ? "└ " : "├ ";
+			}
 
-			// if (!instruction->descriptor.empty()) description += " // " + instruction->descriptor;
-			cout << description << endl;
+			cout << prefix << description << endl;
+
+			if (task == Task::Block) {
+				string gap = " ";
+				for (int d = 0; d < digits - 1; d++) gap += " ";
+				cout << indent << gap << " ┊ " << endl;
+				Log(runtime, &runtime->literals[instruction->mode]->block->body, depth + 1, indent + gap + " ┆ ");
+				cout << indent << gap << " ┊ " << endl;
+			}
 		}
 	}
 

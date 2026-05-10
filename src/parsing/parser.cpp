@@ -401,13 +401,13 @@ void Branch(vector<Token>* tokens, vector<Node>* target, int position, Node* lef
 					vector<Token> question = left->children[i];
 					
 					if (question.empty()) question = { Token(Mark::Word, "true") };
+					Parse(&question, &node.children);
 
 					vector<Token> answer = left->children[i + 1];
-					Parse(&question, &node.children);
 
 					Node resolution = Node{ Task::Array, left->contents };
 					Parse(&answer, &resolution.children);
-					
+
 					node.children.push_back(resolution);
 				}
 

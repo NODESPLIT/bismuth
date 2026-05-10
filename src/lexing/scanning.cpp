@@ -285,7 +285,7 @@ tsl::ordered_map<Mark, Scanner> Scanners = {
 				token->children = last->children;
 		
 				vector<Token> list;
-				Analyse(token->contents.substr(1, token->contents.size() - 2), &list, true);
+				Analyse(token->contents.substr(1, token->contents.size() - 2), &list);
 				token->children.push_back(list);
 
 				token->contents = last->contents + " " + token->contents;
