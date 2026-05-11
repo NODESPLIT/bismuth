@@ -64,6 +64,10 @@ Reference Runtime::load(string path, Reference in, Scope scope) {
 		result = Value::Make(passed);
 	}
 
+	if (Bismuth::Testing && Tests.size() == 0) {
+		cout << "\033[91m0 tests found...\033[0m" << endl;
+	}
+
 	Tests = originalTests;
 	return result;
 }

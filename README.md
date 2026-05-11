@@ -27,7 +27,7 @@ Then you can run the bismuth repl by running `bismuth`, you can also open a .bi 
 
 Some flags you can give to the runtime:
 - `-r` / `--repl` : force load the repl
-- `-q` / `--quiet` : silence all terminal output
+- `-o` / `--output` : prints the resulting value of the script
 - `-v` / `--verbose` : describe all steps of loading and running of the given file
 - `-t` / `--test` : run all tests in given script or every script deep in given path
 

@@ -6,7 +6,7 @@ int main(int argc, char *argv[]) {
   unordered_map<string, bool> flags = {
     { "-v", false }, { "--verbose", false },
     { "-r", false }, { "--repl", false },
-    { "-q", false }, { "--quiet", false },
+    { "-o", false }, { "--output", false },
     { "-t", false }, { "--test", false }
   };
 
@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
   }
 
   bool repl = flags["-r"] || flags["--repl"];
-  bool quiet = flags["-q"] || flags["--quiet"];
+  bool output = flags["-o"] || flags["--output"];
   Bismuth::Verbose = flags["-v"] || flags["--verbose"];
   Bismuth::Testing = flags["-t"] || flags["--test"];
 
@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
   } else {
     if (Bismuth::Exists(path)) {
       Bismuth::Runtime runtime = Bismuth::Runtime(path);
-      if (!quiet && !Bismuth::Verbose && !Bismuth::Testing && !runtime.result->is(Bismuth::Type::Void)) cout << runtime.result->describe() << endl;
+      if (output && !Bismuth::Verbose && !Bismuth::Testing) cout << runtime.result->describe() << endl;
     } else if (std::filesystem::is_directory(path)) {
       vector<string> paths;
 
