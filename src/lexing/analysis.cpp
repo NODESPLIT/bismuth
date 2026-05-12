@@ -96,9 +96,9 @@ void Analyse(string bismuth, vector<Token>* target, bool listing) {
 		}
 
 		if (cued != Mark::None) {
-			contents += character;
-
 			step = Scanners[cued].end(character, last, listing);
+			
+			if (step != Step::Skip) contents += character;
 			if (step == Step::Nest) nesting++;
 
 			if (nesting == 0) {

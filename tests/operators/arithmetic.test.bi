@@ -20,7 +20,7 @@
 		'voidstring',
 		'truestring',
 		'( 1 -> 4 )string',
-		'{ Block }string'
+		'\'{ Block }\'string'
 	]
 )
 

@@ -18,7 +18,8 @@ class Runtime {
 	public:
 		static void Log(Scope scope, int depth=0);
 		static inline State Current;
-		static inline vector<Test> Tests;
+
+		vector<Test> tests;
 
 		vector<string> words;
 		vector<Reference> literals;

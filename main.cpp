@@ -38,9 +38,16 @@ int main(int argc, char *argv[]) {
         if (Bismuth::Exists(child)) paths.push_back(child);
       }
 
+      int count = 0;
       if (paths.size() > 1) cout << endl;
-      for (int i = 0; i < paths.size(); i++) Bismuth::Runtime runtime = Bismuth::Runtime(paths[i]);
+      
+      for (int i = 0; i < paths.size(); i++) {
+        Bismuth::Runtime runtime = Bismuth::Runtime(paths[i]);
+        count += runtime.tests.size();
+      }
+
       if (paths.size() > 1) cout << endl;
+      if (count == 0) cout << "\033[91m0 tests found...\033[0m" << endl;
     } else {
       cout << "Bismuth '" << path << "' not found" << endl;
     }

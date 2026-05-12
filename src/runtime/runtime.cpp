@@ -16,13 +16,11 @@ Runtime::Runtime() { Bindings::Bind(this); init(global); }
 Runtime::Runtime(string path, Reference in) { Bindings::Bind(this); result = load(path, in, global); }
 
 Reference Runtime::load(string path, Reference in, Scope scope) {
+	int initialTests = tests.size();
 	path = Search::Path(path);
 
 	if (!scope) scope = global;
 	init(scope, path, in);
-
-	vector<Test> originalTests = Tests;
-	Tests = {};
 
 	ifstream stream = ifstream(path);
 	
@@ -37,14 +35,16 @@ Reference Runtime::load(string path, Reference in, Scope scope) {
 	Reference result = interpret(bismuth);
 	scopes.pop();
 
-	if (Bismuth::Testing && Tests.size() > 0) {
+	int newTests = tests.size() - initialTests;
+
+	if (Bismuth::Testing && newTests > 0) {
 		cout << "\n\033[37m[ " << path << " ]\033[0m" << endl;
 		cout << Utils::Boxed(Bismuth::Header, 68, 1, true, false) << endl << "\033[37m┊\033[0m" << endl;
 
 		bool passed = true;
 		int total = 0;
-		for (int i = 0; i < Tests.size(); i++) {
-			Test test = Tests[i];
+		for (int i = initialTests; i < tests.size(); i++) {
+			Test test = tests[i];
 
 			if (test.passed) {
 				total++;
@@ -53,22 +53,17 @@ Reference Runtime::load(string path, Reference in, Scope scope) {
 			}
 
 			cout << ( test.passed ? "\033[92m" : "\033[91m" );
-			cout << ( i == 0 ? "┎" : i == Tests.size() - 1 ? "┖" : "┠" ) << " " << ( test.passed ? "🟢" : "🔴" ) << " " << test.description << endl;
+			cout << ( i == 0 ? "┎" : i == tests.size() - 1 ? "┖" : "┠" ) << " " << ( test.passed ? "🟢" : "🔴" ) << " " << test.description << endl;
 			cout << "\033[0m";
 		}
 
 		cout << ( passed ? "\033[92m" : "\033[91m" );
-		cout << "┊" << endl << "└ " << ( passed ? "🟢" : "🔴" ) << " [\033[1m" << ( passed ? "SUCCESS" : "FAILURE" ) << "\033[0m" << ( passed ? "\033[92m" : "\033[91m" ) << "] " << total << " of " << Tests.size() << " passed" << endl << endl;
+		cout << "┊" << endl << "└ " << ( passed ? "🟢" : "🔴" ) << " [\033[1m" << ( passed ? "SUCCESS" : "FAILURE" ) << "\033[0m" << ( passed ? "\033[92m" : "\033[91m" ) << "] " << total << " of " << tests.size() << " passed" << endl << endl;
 		cout << "\033[0m";
 
 		result = Value::Make(passed);
 	}
 
-	if (Bismuth::Testing && Tests.size() == 0) {
-		cout << "\033[91m0 tests found...\033[0m" << endl;
-	}
-
-	Tests = originalTests;
 	return result;
 }
 
@@ -161,7 +156,7 @@ void Runtime::init(Scope scope, string path, Reference in) {
 					pass = result->equals(arguments[2]);
 				}
 
-				Tests.push_back({ description, pass });
+				tests.push_back({ description, pass });
 				return Value::Make(pass);
 			}
 		)

@@ -1,5 +1,5 @@
 void Analyse(string bismuth, vector<Token>* target, bool listing=false);
-enum class Step { Next, Start, Stop, Stay, Over, Nest };
+enum class Step { Next, Skip, Start, Stop, Stay, Over, Nest };
 
 int AsciiToDecimal(char c) { return c >= '0' && c <= '9' ? (int)c - '0' : (int)c - 'A' + 10; }
 
@@ -9,6 +9,20 @@ namespace Scanning {
 	bool Decimal = false;
 	bool Structure = false;
 	bool Gap = false;
+
+	string StringContent = "";
+	char StringCharacter = 0;
+	char StringBefore = 0;
+
+	unordered_map<char, char> StringEscapes = {
+		{ 'a', '\a' },
+		{ 'b', '\b' },
+		{ 'f', '\f' },
+		{ 'n', '\n' },
+		{ 'r', '\r' },
+		{ 't', '\t' },
+		{ 'v', '\v' }
+	};
 
 	function<Step(Token*, Token*, vector<Token>*, bool)> Subexpression = [](Token* token, Token* last, vector<Token>* tokens, bool listing) {
 		token->contents = token->contents.substr(1, token->contents.size() - 2);
@@ -62,9 +76,47 @@ tsl::ordered_map<Mark, Scanner> Scanners = {
 	{
 		Mark::String,
 		Scanner {
-			[](char character, Token* last, bool listing) { return character == '\'' ? Step::Start : Step::Next; },
-			[](char character, Token* last, bool listing) { return character == '\'' ? Step::Stop : Step::Next; },
-			[](Token* token, Token* last, vector<Token>* tokens, bool listing) { token->contents = token->contents.substr(1, token->contents.size() - 2); return Step::Next; }
+			[](char character, Token* last, bool listing) {
+				if (character == '\'' || character == '"') {
+					Scanning::StringCharacter = character;
+					Scanning::StringContent = "";
+					return Step::Start;
+				}
+
+				return Step::Next;
+			},
+			[](char character, Token* last, bool listing) {
+				if (character == Scanning::StringCharacter && Scanning::StringBefore != '\\') {
+					Scanning::StringCharacter = 0;
+					Scanning::StringBefore = 0;
+					return Step::Stop;
+				}
+
+				if (character == '\\') {
+					if (Scanning::StringBefore == '\\') {
+						Scanning::StringBefore = 0;
+						return Step::Next;
+					} else {
+						Scanning::StringBefore = character;
+						return Step::Skip;
+					}
+				} else {
+					if (Scanning::StringBefore == '\\') {
+						if (Scanning::StringEscapes.count(character)) {
+							character = Scanning::StringEscapes[character];
+						}
+					}
+				}
+
+				Scanning::StringBefore = character;
+				Scanning::StringContent += character;
+				return Step::Next;
+			},
+			[](Token* token, Token* last, vector<Token>* tokens, bool listing) {
+				token->contents = Scanning::StringContent;
+				Scanning::StringContent = "";
+				return Step::Next;
+			}
 		}
 	},
 	{
