@@ -58,14 +58,16 @@ class Runtime {
 			Reference last = Value::Empty();
 
 			while (Current.cursor.position < instructions.size()) {
-				// cout << "CURSOR: " << Current.cursor.position << endl;
 				Instruction* instruction = &instructions[Current.cursor.position];
+				// cout << "CURSOR: " << Current.cursor.position << " - " << Names::Wiring[instruction->wire] << endl;
 
 				if (instruction->wire) {
 					last = instruction->wire(state, instruction, last, &Current.cursor);
 					state[Current.cursor.position] = last;
+
 					if (returned) {
 						if (returns) returned = false;
+						Current = saved;
 						return last;
 					}
 				} else {

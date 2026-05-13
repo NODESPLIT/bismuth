@@ -4,6 +4,36 @@
 */
 
 #.test(
+	'If statements can be used to tree binary decisions with if, elseif and else',
+	[]{
+		test = [number, boolean] {
+			if boolean { return 'nice!' }
+
+			if number <= 10 {
+				return 'Under or equal to 10'
+			} else number == 20 {
+				return 'Is 20'
+			} else {
+				return 'Not 20'
+			}
+		}
+		
+		[
+			test(10, true),
+			test(10, false),
+			test(20, false),
+			test(30, false)
+		]
+	},
+	[
+		'nice!',
+		'Under or equal to 10',
+		'Is 20',
+		'Not 20'
+	]
+)
+
+#.test(
 	'If can be used inside expressions and are resolved before further operation',
 	[]{
 		test = [ value ] {
