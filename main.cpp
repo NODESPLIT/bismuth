@@ -38,6 +38,8 @@ int main(int argc, char *argv[]) {
         if (Bismuth::Exists(child)) paths.push_back(child);
       }
 
+      sort(paths.begin(), paths.end());
+
       int count = 0;
       if (paths.size() > 1) cout << endl;
       
