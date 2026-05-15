@@ -1,3 +1,5 @@
+include(ExternalProject)
+
 cmake_minimum_required(VERSION 3.23)
 set(CMAKE_CXX_STANDARD 20)
 project(bismuth)
@@ -21,7 +23,7 @@ add_executable(bismuth)
 target_sources(bismuth PRIVATE main.cpp)
 target_link_libraries(bismuth PRIVATE tsl::ordered_map linenoise Boost::filesystem)
 
-add_compile_options(-Wall -O3 -fomit-frame-pointer -fnew-alignment)
+add_compile_options(-Wall -O3 -fomit-frame-pointer -fnew-alignment 8)
 
 set(CMAKE_FIND_LIBRARY_SUFFIXES "${OLD_CMAKE_FIND_LIBRARY_SUFFIXES}")
 unset(OLD_CMAKE_FIND_LIBRARY_SUFFIXES)
@@ -35,14 +37,19 @@ add_custom_target(
   COMMENT "Generating operators.cpp"
 )
 
-add_custom_target(
-  crystal ALL
-  COMMAND /bin/bash -c "if [[ ! -e ${CMAKE_CURRENT_SOURCE_DIR}/tests/crystal/build ]]\; then cd ${CMAKE_CURRENT_SOURCE_DIR}/tests/crystal \\&\\& mkdir -p build \\&\\& cd build \\&\\& cmake .. \\&\\& make\; fi"
-  BYPRODUCTS tests/crystal/build/example.crystal
-  COMMENT "Compiling test crystal"
+ExternalProject_Add(
+  example
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests/crystal
+  BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests/crystal/build
+  INSTALL_COMMAND ""
 )
 
-add_dependencies(bismuth operators crystal)
+add_dependencies(bismuth operators example)
 
-add_custom_command(TARGET bismuth POST_BUILD COMMAND ./bismuth -t ../tests)
+add_custom_command(
+  TARGET bismuth POST_BUILD
+  COMMAND ./bismuth -t ../tests
+  DEPENDS example
+)
+
 install(TARGETS bismuth)

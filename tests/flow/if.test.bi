@@ -17,7 +17,7 @@
 				return 'Not 20'
 			}
 		}
-		
+
 		[
 			test(10, true),
 			test(10, false),
@@ -34,7 +34,7 @@
 )
 
 #.test(
-	'If can be used inside expressions and are resolved before further operation',
+	'Ifs can be used inside expressions and are resolved before further operation',
 	[]{
 		test = [ value ] {
 			'result: ' + if value == 10 { value + ' Equals 10!' } else value == 2 { value + ' Equals 2!' } else { value + ' is neither!' } + '!!'
