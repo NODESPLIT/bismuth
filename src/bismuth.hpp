@@ -46,6 +46,10 @@ namespace Utils {
 		return parts;
 	};
 
+	string Join(vector<string> parts, string delimiter="") {
+		return algorithm::join(parts, delimiter);
+	};
+
 	string TrimLeft(string text) {
 		boost::trim_left(text);
 		return text;

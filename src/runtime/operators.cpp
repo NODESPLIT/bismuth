@@ -36,7 +36,12 @@ namespace Operate {
   Reference TableTable0(Reference left, Reference right) {
   	Table table = left->as<Table>();
   	Table concat = right->as<Table>();
-  	for (const auto& [ name, variable ] : concat) table[name] = Value::Copy(variable);
+  	
+  	for (const auto& [ name, variable ] : concat) {
+  		table[name] = Value::Copy(variable);
+  		table[name]->container = left;
+  	}
+  
   	return Value::Make(table);
   };
 

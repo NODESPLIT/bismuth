@@ -7,29 +7,42 @@ int main(int argc, char *argv[]) {
     { "-v", false }, { "--verbose", false },
     { "-r", false }, { "--repl", false },
     { "-o", false }, { "--output", false },
-    { "-t", false }, { "--test", false }
+    { "-t", false }, { "--test", false },
+    { "-d", false }, { "--docs", false }
   };
 
   string path = "./";
+  bool documenting = false;
+
   for (int i = 1; i < args.size(); i++) {
-    if (flags.count(args[i])) {
-      flags[args[i]] = true;
+    if (documenting) {
+      documenting = false;
+      Bismuth::DocumentPath = args[i];
     } else {
-      path = args[i];
+      if (flags.count(args[i])) {
+        flags[args[i]] = true;
+        if (args[i] == "-d" || args[i] == "--docs") documenting = true;
+      } else {
+        path = args[i];
+      }
     }
   }
 
   bool repl = flags["-r"] || flags["--repl"];
   bool output = flags["-o"] || flags["--output"];
+
   Bismuth::Verbose = flags["-v"] || flags["--verbose"];
   Bismuth::Testing = flags["-t"] || flags["--test"];
+  Bismuth::Document = flags["-d"] || flags["--docs"];
+
+  if (Bismuth::Document) std::filesystem::remove_all(Bismuth::DocumentPath);
 
   if (repl || ( args.size() <= 1 && !Bismuth::Exists(path) )) {
     Bismuth::Repl();
   } else {
     if (Bismuth::Exists(path)) {
       Bismuth::Runtime runtime = Bismuth::Runtime(path);
-      if (output && !Bismuth::Verbose && !Bismuth::Testing) cout << runtime.result->describe() << endl;
+      if (output && !Bismuth::Verbose && !Bismuth::Testing && !Bismuth::Document) cout << runtime.result->describe() << endl;
     } else if (std::filesystem::is_directory(path)) {
       vector<string> paths;
 
@@ -41,15 +54,17 @@ int main(int argc, char *argv[]) {
       sort(paths.begin(), paths.end());
 
       int count = 0;
-      if (paths.size() > 1) cout << endl;
+      if (Bismuth::Testing && paths.size() > 1) cout << endl;
       
       for (int i = 0; i < paths.size(); i++) {
         Bismuth::Runtime runtime = Bismuth::Runtime(paths[i]);
         count += runtime.tests.size();
       }
 
-      if (paths.size() > 1) cout << endl;
-      if (count == 0) cout << "\033[91m0 tests found...\033[0m" << endl;
+      if (Bismuth::Testing) {
+        if (paths.size() > 1) cout << endl;
+        if (count == 0) cout << "\033[91m0 tests found...\033[0m" << endl;
+      }
     } else {
       cout << "Bismuth '" << path << "' not found" << endl;
     }

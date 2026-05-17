@@ -3,7 +3,7 @@
 */
 
 #.test(
-	'Logical && AND between values compares their isTrue() results',
+	'Logical `&&` AND between values compares their `isTrue()` results',
 	[]{
 		[
 			true && true && 'Nice!',
@@ -21,7 +21,7 @@
 )
 
 #.test(
-	'Logical || OR between values compares their isTrue() results',
+	'Logical `||` OR between values compares their `isTrue()` results',
 	[]{
 		[
 			true || true && 'Nice!',
@@ -43,7 +43,7 @@
 )
 
 #.test(
-	'Logical ! before a value flips its boolean value',
+	'Logical `!` before a value flips its boolean value',
 	[]{
 		[
 			!true,

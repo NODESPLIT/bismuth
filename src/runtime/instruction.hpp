@@ -14,4 +14,5 @@ struct Instruction {
 struct Annotated : Instruction {
 	static inline string Descriptor = "";
 	string descriptor = Descriptor;
+	string source = "";
 };

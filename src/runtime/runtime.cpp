@@ -37,31 +37,71 @@ Reference Runtime::load(string path, Reference in, Scope scope) {
 
 	int newTests = tests.size() - initialTests;
 
-	if (Bismuth::Testing && newTests > 0) {
-		cout << "\n\033[37m[ " << path << " ]\033[0m" << endl;
-		cout << Utils::Boxed(Bismuth::Header, 68, 1, true, false) << endl << "\033[37m┊\033[0m" << endl;
+	struct {
+		string file = "";
+		std::filesystem::path path;
+		string content = "";
+	} doc;
 
-		bool passed = true;
-		int total = 0;
-		for (int i = initialTests; i < tests.size(); i++) {
-			Test test = tests[i];
+	if (newTests > 0) {
+		if (Bismuth::Testing || Bismuth::Document) {
+			if (Bismuth::Testing) {
+				cout << "\n\033[37m[ " << path << " ]\033[0m" << endl;
+				cout << Utils::Boxed(Bismuth::Header, 68, 1, true, false) << endl << "\033[37m┊\033[0m" << endl;
+			} else if (Bismuth::Document) {
+				doc.file = std::filesystem::path(path).stem().stem().string() + ".md";
+				doc.path = std::filesystem::path(Bismuth::DocumentPath) / std::filesystem::path(path).remove_filename();
+				std::filesystem::create_directories(doc.path);
 
-			if (test.passed) {
-				total++;
-			} else {
-				passed = false;
+				doc.content += "# ";
+				doc.content += Bismuth::Header;
+				doc.content += "\n\n";
 			}
 
-			cout << ( test.passed ? "\033[92m" : "\033[91m" );
-			cout << ( i == 0 ? "┎" : i == tests.size() - 1 ? "┖" : "┠" ) << " " << ( test.passed ? "🟢" : "🔴" ) << " " << test.description << endl;
-			cout << "\033[0m";
+			bool passed = true;
+			int total = 0;
+
+			for (int i = initialTests; i < tests.size(); i++) {
+				Test test = tests[i];
+
+				if (test.passed) {
+					total++;
+				} else {
+					passed = false;
+				}
+
+				if (Bismuth::Testing) {
+					cout << ( test.passed ? "\033[92m" : "\033[91m" );
+					cout << ( i == 0 ? "┎" : i == tests.size() - 1 ? "┖" : "┠" ) << " " << ( test.passed ? "🟢" : "🔴" ) << " " << test.description << endl;
+					cout << "\033[0m";
+				} else if (Bismuth::Document) {
+					doc.content += "---\n\n";
+					doc.content += "##### " + test.description;
+					doc.content += "\n\n###### Example:\n";
+					doc.content += "```\n";
+					string method = test.method.substr(test.method.find("]{") + 2);
+					method = method.substr(0, method.size() - 1);
+					int lines = std::count(method.begin(), method.end(), '\n');
+					doc.content += lines == 0 ? Utils::Trim(method) : method;
+					doc.content += "\n```\n";
+					doc.content += "```\n=> ";
+					doc.content += test.result;
+					doc.content += "\n```\n\n";
+				}
+			}
+
+			if (Bismuth::Testing) {
+				cout << ( passed ? "\033[92m" : "\033[91m" );
+				cout << "┊" << endl << "└ " << ( passed ? "🟢" : "🔴" ) << " [\033[1m" << ( passed ? "SUCCESS" : "FAILURE" ) << "\033[0m" << ( passed ? "\033[92m" : "\033[91m" ) << "] " << total << " of " << tests.size() << " passed" << endl << endl;
+				cout << "\033[0m";
+			} else if (Bismuth::Document) {
+				std::ofstream file(doc.path / doc.file);
+				file << doc.content.c_str();
+				file.close();
+			}
+
+			result = Value::Make(passed);
 		}
-
-		cout << ( passed ? "\033[92m" : "\033[91m" );
-		cout << "┊" << endl << "└ " << ( passed ? "🟢" : "🔴" ) << " [\033[1m" << ( passed ? "SUCCESS" : "FAILURE" ) << "\033[0m" << ( passed ? "\033[92m" : "\033[91m" ) << "] " << total << " of " << tests.size() << " passed" << endl << endl;
-		cout << "\033[0m";
-
-		result = Value::Make(passed);
 	}
 
 	return result;
@@ -143,7 +183,7 @@ void Runtime::init(Scope scope, string path, Reference in) {
 		"test",
 		Block::Bound(
 			[=, this](Array arguments) {
-				if (!Bismuth::Testing) return Value::Make(false);
+				if (!Bismuth::Testing && !Bismuth::Document) return Value::Make(false);
 
 				string description = arguments[0]->as<String>();
 				Reference result = call(arguments[1]);
@@ -156,7 +196,7 @@ void Runtime::init(Scope scope, string path, Reference in) {
 					pass = result->equals(arguments[2]);
 				}
 
-				tests.push_back({ description, pass });
+				tests.push_back({ description, pass, arguments[1]->describe(0), arguments[2]->describe(0) });
 				return Value::Make(pass);
 			}
 		)

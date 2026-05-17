@@ -18,12 +18,14 @@ class Block {
 		vector<string> arguments;
 		vector<vector<Annotated>> defaults;
 		vector<Annotated> body;
+		string source = "";
 
 		function<Reference(Array)> binding = nullptr;
 
 		static Reference Bound(function<Reference(Array)> binding);
 
 		Block(){}
+		Block(string source) { this->source = source; }
 		Block(function<Reference(Array)> binding) { this->binding = binding; }
 		Block(vector<string> arguments, vector<vector<Annotated>> defaults, vector<Annotated> body){
 			this->arguments = arguments;
@@ -104,6 +106,9 @@ class Value : public std::enable_shared_from_this<Value> {
 			return copy;
 		}
 
+		bool has(string key) { return point<Table>()->count(key) != 0; }
+		bool has(Reference key) { return has(key->as<String>()); }
+
 		Reference get(int index) { return as<Array>()[index]; }
 		Reference get(string key) { return as<Table>()[key]; }
 
@@ -172,7 +177,8 @@ class Value : public std::enable_shared_from_this<Value> {
 					(*table)[key] = Empty();
 				}
 
-				return (*table)[key];
+				Reference result = (*table)[key];
+				return result;
 			}
 
 			return Empty();
@@ -206,13 +212,6 @@ class Value : public std::enable_shared_from_this<Value> {
 			Table* table = point<Table>();
 			if (!table->count(key)) (*table)[key] = Empty();
 			(*table)[key]->set(to);
-
-			if (to->is(Type::Block) && !force) {
-				(*table)[key]->container = Empty(Type::Table);
-				(*table)[key]->container->value = value;
-			} else {
-				(*table)[key]->container = nullptr;
-			}
 			
 			value = *table;
 		}
@@ -289,6 +288,15 @@ class Value : public std::enable_shared_from_this<Value> {
 
 			return Empty();
 		}
+
+		Reference meta(string key) {
+			if (is(Type::Table) && has(Symbol::Instance)) {
+				Reference meta = get(Symbol::Instance);
+				if (meta->is(Type::Table) && meta->has(key)) return meta->get(key);
+			}
+
+			return Empty();
+		}
 		
 		string describe(Number number) {
 			stringstream stream;
@@ -341,7 +349,7 @@ class Value : public std::enable_shared_from_this<Value> {
 
 				return before + output + ( readable ? "\n" + Utils::Indent(indent) + "}" : " }" );
 			} else if (is(Type::Block)) {
-				return before + "'{ Block }'";
+				return before + (block->source.empty() ? "'{ Block }'" : block->source);
 			}
 
 			return before + "void";

@@ -4,7 +4,7 @@
 */
 
 #.test(
-	'If statements can be used to tree binary decisions with if, elseif and else',
+	'`if statements` can be used to tree binary decisions with `if`, `else if` and `else`',
 	[]{
 		test = [number, boolean] {
 			if boolean { return 'nice!' }
@@ -34,7 +34,7 @@
 )
 
 #.test(
-	'Ifs can be used inside expressions and are resolved before further operation',
+	'`ifs` can be used inside expressions and are resolved before further operation',
 	[]{
 		test = [ value ] {
 			'result: ' + if value == 10 { value + ' Equals 10!' } else value == 2 { value + ' Equals 2!' } else { value + ' is neither!' } + '!!'

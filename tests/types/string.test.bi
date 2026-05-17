@@ -4,7 +4,7 @@
 */
 
 #.test(
-	'Simple strings can be defined with "" or \'\' and escaped with backslash',
+	'Simple strings can be defined with `""` or `\'\'` and escaped with backslash',
 	[]{
 		[
 			[

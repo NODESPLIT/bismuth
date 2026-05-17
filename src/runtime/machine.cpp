@@ -13,7 +13,15 @@ namespace Machine {
 	Reference TABLE(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
 		Reference table = Value::Empty(Type::Table);
 		vector<int>* relations = &Instance->relations[instruction->children[0]];
-		for (int i = 0; i < relations->size(); i += 2) table->set(state[ (*relations)[i] ]->as<String>(), Value::Copy(state[ (*relations)[i + 1] ]));
+		
+		for (int i = 0; i < relations->size(); i += 2) {
+			Reference value = Value::Copy(state[ (*relations)[i + 1] ]);
+			table->set(
+				state[ (*relations)[i] ]->as<String>(),
+				value
+			);
+		}
+
 		return table;
 	}
 
@@ -37,12 +45,25 @@ namespace Machine {
 	}
 
 	Reference INSIDE(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
-		return state[instruction->children[0]]->get(state[instruction->children[1]]);
+		Reference table = state[instruction->children[0]];
+		Reference key = state[instruction->children[1]];
+
+		Reference result = table->get(key);
+		result->container = table;
+		
+		if (result->is(Type::Void)) {
+			Reference hook = table->meta("index");
+			hook->container = table;
+			if (hook->is(Type::Block)) return Instance->call(hook, { key }, true);
+		}
+
+		return result;
 	}
 
 	Reference DEFINE(Reference state[], Instruction* instruction, Reference last, Cursor* cursor) {
 		Reference left = state[instruction->children[0]];
-		left->set(Value::Copy(instruction->children[1] > -1 ? state[instruction->children[1]] : last));
+		Reference value = Value::Copy(instruction->children[1] > -1 ? state[instruction->children[1]] : last);
+		left->set(value);
 		return left;
 	}
 

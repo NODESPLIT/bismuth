@@ -1,8 +1,3 @@
-struct Symbol {
-	inline static const string Context = "#";
-	inline static const string Instance = "@";
-};
-
 struct State {
 	vector<Annotated>* instructions;
 	Cursor cursor;
@@ -12,6 +7,8 @@ struct State {
 struct Test {
 	string description;
 	bool passed;
+	string method;
+	string result;
 };
 
 class Runtime {
@@ -89,10 +86,24 @@ class Runtime {
 
 		Reference call(Reference value, bool branch=true) { return call(value, {}, branch); }
 		Reference call(Reference value, Array values, bool branch=true) {
-			shared_ptr<Block> block = value->block;
-			if (block->binding) return block->binding(values);
+			shared_ptr<Block> block = nullptr;
+			Reference container = nullptr;
+			Scope context = nullptr;
 
-			scopes.push(branch ? branched(value->context) : value->context);
+			Reference hook = value->meta("call");
+
+			if (hook->is(Type::Block)) {
+				block = hook->block;
+				container = value;
+				context = hook->context;
+			} else {
+				block = value->block;
+				container = value->container;
+				context = value->context;
+			}
+			
+			if (block->binding) return block->binding(values);
+			scopes.push(branch ? branched(context) : context);
 
 			Reference arguments = Value::Lock(Value::Empty(Type::Array));
 			int argument = 0;
@@ -119,7 +130,7 @@ class Runtime {
 			call->descriptor = Current.instruction()->descriptor;
 			(*scopes.top())[Symbol::Context]->SET("call", call);
 
-			if (value->container) (*scopes.top())[Symbol::Instance] = value->container;
+			if (container) (*scopes.top())[Symbol::Instance] = container;
 
 			Reference result = run(block->body, branch);
 			scopes.pop();

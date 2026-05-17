@@ -55,6 +55,6 @@ Value::Value(Node* node) {
 		value = array;
 	} else if (node->mark == Mark::Block) {
 		type = Type::Block;
-		block = shared_ptr<Block>(new Block());
+		block = shared_ptr<Block>(new Block(node->contents));
 	}
 }

@@ -27,8 +27,16 @@ namespace Bismuth {
 	const string Index = "index";
 	string Header;
 
+	struct Symbol {
+		inline static const string Context = "#";
+		inline static const string Instance = "@";
+	};
+
 	bool Verbose = false;
 	bool Testing = false;
+	bool Document = false;
+	
+	string DocumentPath = "./docs";
 
 	namespace Search {
 		static string File(string path) {
