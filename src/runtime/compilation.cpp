@@ -83,7 +83,7 @@ namespace Machine {
 			}
 
 			Annotated instruction = Annotated{ wire, mode };
-			instruction.source = node->contents;
+			instruction.source = node->source;
 
 			if (task == Task::Block) {
 				vector<Node> head;

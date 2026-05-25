@@ -1,4 +1,4 @@
-void Analyse(string bismuth, vector<Token>* target, bool listing=false);
+void Analyse(string bismuth, vector<Token>* target, bool listing=false, int columnOffset=0);
 enum class Step { Next, Skip, Start, Stop, Stay, Over, Nest };
 
 int AsciiToDecimal(char c) { return c >= '0' && c <= '9' ? (int)c - '0' : (int)c - 'A' + 10; }
@@ -9,6 +9,28 @@ namespace Scanning {
 	bool Decimal = false;
 	bool Structure = false;
 	bool Gap = false;
+
+	namespace Cursor {
+		int Line = 1;
+		int Column = 1;
+		
+		std::stack<std::pair<int, int>> Stack = {};
+
+		void Push() { Stack.push(std::make_pair(Line, Column)); }
+		
+		void Push(int line, int column) {
+			Push();
+			Line = line;
+			Column = column;
+		}
+
+		void Pop() {
+			std::pair<int, int> state = Stack.top();
+			Line = state.first;
+			Column = state.second;
+			Stack.pop();
+		}
+	};
 
 	string StringContent = "";
 	char StringCharacter = 0;
@@ -26,11 +48,14 @@ namespace Scanning {
 
 	function<Step(Token*, Token*, vector<Token>*, bool)> Subexpression = [](Token* token, Token* last, vector<Token>* tokens, bool listing) {
 		token->contents = token->contents.substr(1, token->contents.size() - 2);
+		Scanning::Cursor::Push(token->source.line, token->source.column);
 		
 		vector<Token> list;
 		Analyse(token->contents, &list, true);
 
 		token->children.push_back(list);
+		Scanning::Cursor::Pop();
+
 		return Step::Next;
 	};
 }
@@ -238,7 +263,7 @@ tsl::ordered_map<Mark, Scanner> Scanners = {
 
 				vector<Token> list;
 				string contents = token->contents.substr(1, token->contents.size() - 1);
-				Analyse(Scanning::DotIndex ? "'" + contents + "'" : contents, &list, true);
+				Analyse(Scanning::DotIndex ? "'" + contents + "'" : contents, &list, true, token->source.column);
 
 				token->children.push_back(list);
 				token->contents = ( last ? ( last->is(Mark::Array) ? "[ " + last->contents + " ]" : last->contents ) : "" ) + token->contents;
@@ -255,6 +280,11 @@ tsl::ordered_map<Mark, Scanner> Scanners = {
 			[](Token* token, Token* last, vector<Token>* tokens, bool listing) {
 				vector<Token> arguments;
 
+				Scanning::Cursor::Push(
+					last->source.line,
+					last->source.column
+				);
+
 				Analyse(last->contents, &arguments, true);
 				token->children.push_back(arguments);
 
@@ -264,6 +294,9 @@ tsl::ordered_map<Mark, Scanner> Scanners = {
 				token->children.push_back(body);
 
 				token->contents = "[" + last->contents + "]" + token->contents;
+				token->relocate(last);
+
+				Scanning::Cursor::Pop();
 				return Step::Over;
 			}
 		}
@@ -277,13 +310,21 @@ tsl::ordered_map<Mark, Scanner> Scanners = {
 				if (last && !last->is(Mark::Call)) token->children.push_back({ *last });
 				if (last && last->is(Mark::Call)) token->children = last->children;
 
+				Scanning::Cursor::Push(
+					last->source.line,
+					last->source.column
+				);
+
 				vector<Token> list;
 				string contents = token->contents.substr(1, token->contents.size() - 2);
-				Analyse(contents, &list, true);
+				Analyse(contents, &list, true, token->source.column);
 
 				token->children.push_back(list);
 				token->contents = (last ? last->contents : "") + token->contents;
 
+				token->relocate(last);
+
+				Scanning::Cursor::Pop();
 				return Step::Over;
 			}
 		}
@@ -297,7 +338,7 @@ tsl::ordered_map<Mark, Scanner> Scanners = {
 				token->contents = token->contents.substr(1, token->contents.size() - 2);
 				
 				vector<Token> list;
-				Analyse(token->contents, &list, true);
+				Analyse(token->contents, &list, true, token->source.column);
 
 				token->children.push_back(list);
 				return Step::Over;
@@ -316,8 +357,8 @@ tsl::ordered_map<Mark, Scanner> Scanners = {
 				token->children = prior->children;
 
 				vector<Token> list;
-				Analyse(token->contents, &list, true);
-				if (list.size() == 0) list.push_back(Token(Mark::Word, "true"));
+				Analyse(token->contents, &list, true, token->source.column - 1);
+				if (list.size() == 0) list.push_back(Token(Mark::Word, "true", token->source));
 				token->children.push_back(list);
 
 				token->contents = prior->contents + " else " + token->contents;
@@ -335,12 +376,19 @@ tsl::ordered_map<Mark, Scanner> Scanners = {
 			[](Token* token, Token* last, vector<Token>* tokens, bool listing) {
 				token->mark = last->mark;
 				token->children = last->children;
-		
+	
+				Scanning::Cursor::Push(
+					last->source.line,
+					last->source.column
+				);
+
 				vector<Token> list;
-				Analyse(token->contents.substr(1, token->contents.size() - 2), &list);
+				Analyse(token->contents.substr(1, token->contents.size() - 2), &list, token->source.column);
 				token->children.push_back(list);
 
 				token->contents = last->contents + " " + token->contents;
+				Scanning::Cursor::Pop();
+
 				return Step::Over;
 			}
 		}

@@ -1,4 +1,5 @@
-void Analyse(string bismuth, vector<Token>* target, bool listing) {
+void Analyse(string bismuth, vector<Token>* target, bool listing, int columnOffset) {
+	Scanning::Cursor::Push();
 	string lastDescriptor = Token::Descriptor;
 
 	Token* last = nullptr;
@@ -21,10 +22,26 @@ void Analyse(string bismuth, vector<Token>* target, bool listing) {
 	string descriptor = "";
 
 	int position = 0;
+	int lastPosition = 0;
+	int linePosition = 0;
+
+	int startLine = 0;
+	int startColumn = 0;
 
 	while (position <= bismuth.size()) {
+		Scanning::Cursor::Column = columnOffset + (position - linePosition) + 1;
+
 		before = character;
 		character = position < bismuth.size() ? bismuth[position] : ' ';
+
+		if (lastPosition != position) {
+			if (before == '\n') {
+				Scanning::Cursor::Line++;
+				Scanning::Cursor::Column = 1;
+				linePosition = position;
+			}
+			lastPosition = position;
+		}
 
 		if (!Scanning::Gap && !comment) {
 			comment = before == '/' && character == '/' ? 1 : before == '/' && character == '*' ? 2 : 0;
@@ -54,7 +71,6 @@ void Analyse(string bismuth, vector<Token>* target, bool listing) {
 			comment = false;
 
 			if (comment == 2) position++;
-
 			continue;
 		}
 
@@ -72,9 +88,14 @@ void Analyse(string bismuth, vector<Token>* target, bool listing) {
 			);
 
 			Token token = Token(cued, stay ? contents.substr(0, contents.size() - 1) : contents);
+			
+			token.source.line = startLine;
+			token.source.column = startColumn;
+
 			step = Scanners[cued].parse ? Scanners[cued].parse(&token, last, target, listing) : Step::Next;
 
 			if (step == Step::Over && target->size() > 0) {
+				token.relocate(last);
 				(*target)[target->size() - 1] = token;
 			} else {
 				target->push_back(token);
@@ -122,6 +143,9 @@ void Analyse(string bismuth, vector<Token>* target, bool listing) {
 				step = scanner.cue(character, last, listing);
 				
 				if (step == Step::Next) continue;
+				startLine = Scanning::Cursor::Line;
+				startColumn = Scanning::Cursor::Column;
+
 				if (step == Step::Stop) { complete = true; single = true; }
 
 				cued = type;
@@ -138,4 +162,5 @@ void Analyse(string bismuth, vector<Token>* target, bool listing) {
 	}
 
 	Token::Descriptor = lastDescriptor;
+	Scanning::Cursor::Pop();
 }

@@ -11,130 +11,129 @@ struct Test {
 	string result;
 };
 
-class Runtime {
-	public:
-		static void Log(Scope scope, int depth=0);
-		static inline State Current;
+struct Runtime {
+	static void Log(Scope scope, int depth=0);
+	static inline State Current;
 
-		vector<Test> tests;
+	vector<Test> tests;
 
-		vector<string> words;
-		vector<Reference> literals;
-		vector<vector<int>> relations;
+	vector<string> words;
+	vector<Reference> literals;
+	vector<vector<int>> relations;
 
-		stack<Scope> scopes;
-		Scope environment = Scope(new Table());
-		Scope global = Scope(new Table());
+	stack<Scope> scopes;
+	Scope environment = Scope(new Table());
+	Scope global = Scope(new Table());
 
-		Reference result;
-		bool returned = false;
+	Reference result;
+	bool returned = false;
 
-		Runtime();
-		Runtime(string path, Reference in=nullptr);
+	Runtime();
+	Runtime(string path, Reference in=nullptr);
 
-		Reference load(string path, Reference in=nullptr, Scope scope=nullptr);
-		Reference import(string path, Reference in=nullptr);
-		Reference interpret(string bismuth);
-		Reference interpret(vector<Token>* tokens);
-		Reference interpret(vector<Node>* tree);
+	Reference load(string path, Reference in=nullptr, Scope scope=nullptr);
+	Reference import(string path, Reference in=nullptr);
+	Reference interpret(string bismuth);
+	Reference interpret(vector<Token>* tokens);
+	Reference interpret(vector<Node>* tree);
 
-		void init(Scope scope, string path="./", Reference in=nullptr);
-		Scope branched(Scope origin=nullptr, Table initial={});
+	void init(Scope scope, string path="./", Reference in=nullptr);
+	Scope branched(Scope origin=nullptr, Table initial={});
 
-		Reference run(vector<Annotated> annotated, bool returns=false) {
-			// cout << "Running:" << endl;
-			// Machine::Log(this, &instructions);
+	Reference run(vector<Annotated> annotated, bool returns=false) {
+		// cout << "Running:" << endl;
+		// Machine::Log(this, &instructions);
 
-			State saved = Current;
-			Current = State(&annotated);
+		State saved = Current;
+		Current = State(&annotated);
 
-			vector<Instruction> instructions;
-			for (int i = 0; i < annotated.size(); i++) instructions.push_back(annotated[i]);
+		vector<Instruction> instructions;
+		for (int i = 0; i < annotated.size(); i++) instructions.push_back(annotated[i]);
 
-			Reference state[instructions.size()];
-			Reference last = Value::Empty();
+		Reference state[instructions.size()];
+		Reference last = Value::Empty();
 
-			while (Current.cursor.position < instructions.size()) {
-				Instruction* instruction = &instructions[Current.cursor.position];
-				// cout << "CURSOR: " << Current.cursor.position << " - " << Names::Wiring[instruction->wire] << endl;
+		while (Current.cursor.position < instructions.size()) {
+			Instruction* instruction = &instructions[Current.cursor.position];
+			// cout << "CURSOR: " << Current.cursor.position << " - " << Names::Wiring[instruction->wire] << endl;
 
-				if (instruction->wire) {
-					last = instruction->wire(state, instruction, last, &Current.cursor);
-					state[Current.cursor.position] = last;
+			if (instruction->wire) {
+				last = instruction->wire(state, instruction, last, &Current.cursor);
+				state[Current.cursor.position] = last;
 
-					if (returned) {
-						if (returns) returned = false;
-						Current = saved;
-						return last;
-					}
-				} else {
-					Current.cursor.jump = instruction->mode;
+				if (returned) {
+					if (returns) returned = false;
+					Current = saved;
+					return last;
 				}
-
-				if (Current.cursor.go > -1) {
-					Current.cursor.position = Current.cursor.go;
-					Current.cursor.go = -1;
-				} else {
-					Current.cursor.position += Current.cursor.jump + 1;
-					Current.cursor.jump = 0;
-				}
-			}
-
-			Current = saved;
-			return last;
-		}
-
-		Reference call(Reference value, bool branch=true) { return call(value, {}, branch); }
-		Reference call(Reference value, Array values, bool branch=true) {
-			shared_ptr<Block> block = nullptr;
-			Reference container = nullptr;
-			Scope context = nullptr;
-
-			Reference hook = value->meta("call");
-
-			if (hook->is(Type::Block)) {
-				block = hook->block;
-				container = value;
-				context = hook->context;
 			} else {
-				block = value->block;
-				container = value->container;
-				context = value->context;
-			}
-			
-			if (block->binding) return block->binding(values);
-			scopes.push(branch ? branched(context) : context);
-
-			Reference arguments = Value::Lock(Value::Empty(Type::Array));
-			int argument = 0;
-
-			for (int i = 0; i < block->arguments.size(); i++) {
-				if (i >= values.size() || values[i]->is(Type::Void)) {
-					Reference defaulting = run(block->defaults[i]);
-					(*scopes.top())[block->arguments[i]] = defaulting;
-					arguments->SET(argument, Value::Copy(defaulting));
-				} else {
-					(*scopes.top())[block->arguments[i]] = Value::Copy(values[i]);
-					arguments->SET(argument, Value::Copy(values[i]));
-				}
-
-				argument++;
+				Current.cursor.jump = instruction->mode;
 			}
 
-			for (int i = argument; i < values.size(); i++) arguments->SET(i, Value::Copy(values[i]));
-			
-			(*scopes.top())[Symbol::Context]->SET("args", arguments);
-			(*scopes.top())[Symbol::Context]->SET("called", value);
-
-			Reference call = Value::Lock(Value::Empty(Type::Table));
-			call->descriptor = Current.instruction()->descriptor;
-			(*scopes.top())[Symbol::Context]->SET("call", call);
-
-			if (container) (*scopes.top())[Symbol::Instance] = container;
-
-			Reference result = run(block->body, branch);
-			scopes.pop();
-
-			return Value::Copy(result);
+			if (Current.cursor.go > -1) {
+				Current.cursor.position = Current.cursor.go;
+				Current.cursor.go = -1;
+			} else {
+				Current.cursor.position += Current.cursor.jump + 1;
+				Current.cursor.jump = 0;
+			}
 		}
+
+		Current = saved;
+		return last;
+	}
+
+	Reference call(Reference value, bool branch=true) { return call(value, {}, branch); }
+	Reference call(Reference value, Array values, bool branch=true) {
+		shared_ptr<Block> block = nullptr;
+		Reference container = nullptr;
+		Scope context = nullptr;
+
+		Reference hook = value->meta("call");
+
+		if (hook->is(Type::Block)) {
+			block = hook->block;
+			container = value;
+			context = hook->context;
+		} else {
+			block = value->block;
+			container = value->container;
+			context = value->context;
+		}
+		
+		if (block->binding) return block->binding(values);
+		scopes.push(branch ? branched(context) : context);
+
+		Reference arguments = Value::Lock(Value::Empty(Type::Array));
+		int argument = 0;
+
+		for (int i = 0; i < block->arguments.size(); i++) {
+			if (i >= values.size() || values[i]->is(Type::Void)) {
+				Reference defaulting = run(block->defaults[i]);
+				(*scopes.top())[block->arguments[i]] = defaulting;
+				arguments->SET(argument, Value::Copy(defaulting));
+			} else {
+				(*scopes.top())[block->arguments[i]] = Value::Copy(values[i]);
+				arguments->SET(argument, Value::Copy(values[i]));
+			}
+
+			argument++;
+		}
+
+		for (int i = argument; i < values.size(); i++) arguments->SET(i, Value::Copy(values[i]));
+		
+		(*scopes.top())[Symbol::Context]->SET("args", arguments);
+		(*scopes.top())[Symbol::Context]->SET("called", value);
+
+		Reference call = Value::Lock(Value::Empty(Type::Table));
+		call->descriptor = Current.instruction()->descriptor;
+		(*scopes.top())[Symbol::Context]->SET("call", call);
+
+		if (container) (*scopes.top())[Symbol::Instance] = container;
+
+		Reference result = run(block->body, branch);
+		scopes.pop();
+
+		return Value::Copy(result);
+	}
 };

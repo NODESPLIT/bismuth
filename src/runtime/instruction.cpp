@@ -1,4 +1,4 @@
-class Runtime;
+struct Runtime;
 namespace Bindings { void Bind(Runtime* runtime); }
 namespace Operate { extern unordered_map<string, int> Reduced; }
 
