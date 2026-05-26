@@ -7,7 +7,9 @@ vector<boost::shared_ptr<Bismuth::API>> Crystals;
 #endif
 
 void Runtime::Log(Scope scope, int depth) {
+	bool first = true;
 	for (const auto& [ name, variable ] : *scope) {
+		if (first) { first = false; } else { cout << endl; }
 		cout << variable->describe(depth, name + "[" + Names::Types[variable->type] + "]: ") << endl;
 	}
 }

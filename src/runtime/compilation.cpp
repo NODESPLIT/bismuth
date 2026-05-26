@@ -10,9 +10,10 @@ namespace Machine {
 			Task task = Machine::Tasks[wire];
 
 			string line = std::to_string(i);
-			line.insert(0, digits - line.size(), ' ');
+			int amount = digits - line.size();
+			if (amount > 0) line.insert(line.begin(), amount, ' ');
 
-			string description = line + " " + ( i == 0 ? "┬" : i == instructions->size() - 1 ? "┴" : "┼" ) + " <" + ( wire ? Names::Wiring[wire] : "JUMP" ) + ">";
+			string description = line + " " + ( i == 0 ? ( instructions->size() == 1 ? "─" : "┬" ) : i == instructions->size() - 1 ? "┴" : "┼" ) + " <" + ( wire ? Names::Wiring[wire] : "JUMP" ) + ">";
 
 			if (( task == Task::Value || task == Task::Array || task == Task::Table || task == Task::Block ) && mode > -1 && mode < runtime->literals.size()) description += ": " + regex_replace(runtime->literals[mode]->describe(), Utils::Flatten, " ");
 			if (task == Task::Read || ( task == Task::Delete && mode > -1 && mode < runtime->words.size() )) description += ": " + runtime->words[mode];
@@ -35,7 +36,11 @@ namespace Machine {
 			string prefix = indent;
 			if (depth > -1) {
 				prefix = prefix.substr(0, prefix.size() - 4);
-				prefix += i == 0 ? "┌ " : i == instructions->size() - 1 ? "└ " : "├ ";
+				if (instructions->size() == 1 ) {
+					prefix += "─ ";
+				} else {
+					prefix += i == 0 ? "┌ " : i == instructions->size() - 1 ? "└ " : "├ ";
+				}
 			}
 
 			cout << prefix << description << endl;
