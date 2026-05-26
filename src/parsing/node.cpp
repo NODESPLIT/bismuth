@@ -1,12 +1,28 @@
 struct Node {
 	static inline string Descriptor = "";
 
-	static void Log(vector<Node>* nodes, int depth = 0) {
+	static void Log(vector<Node>* nodes, string indent = "") {
+		int i = 0;
+		bool base = indent.empty();
+
 		for (auto &node : *nodes) {
-			cout << Utils::Indent(depth);
+			bool first = i == 0;
+			bool last = i == nodes->size() - 1;
+			bool content = node.children.size() > 0;
+
+			cout << indent << ( first && base ? "┌─" : "└─" );
+			cout << ( content ? "┬─ " : "── " );
 			cout << node.describe() << endl;
+
 			if (node.task == Task::End) cout << endl;
-			Log(&node.children, depth + 1);
+
+			if (content) {
+				cout << indent << "┆ │" << endl;
+				Log(&node.children, indent + "┆ ");
+				if (!last) cout << indent << "┆" << endl;
+			}
+
+			i++;
 		}
 	}
 
@@ -28,8 +44,8 @@ struct Node {
 
 	string describe() {
 		string description =  "<" + Names::Task[task] + ">";
-		if (mark != Mark::None) description += "[" + Names::Mark[mark] + "]";
-		if (!contents.empty()) description += ": " + regex_replace(contents, Utils::Flatten, " ");
+		if (mark != Mark::None) description += " [" + Names::Mark[mark] + "]";
+		if (!contents.empty()) description += " ← |" + regex_replace(contents, Utils::Flatten, " ") + "|";
 		// if (!descriptor.empty()) description += " - \"" + descriptor + "\"";
 		return description;
 	}

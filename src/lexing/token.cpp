@@ -7,21 +7,57 @@ struct Source {
 struct Token {
   static inline string Descriptor = "";
 
-  static void Log(vector<Token>* tokens, int depth = 0) {
+  static void Log(vector<Token>* tokens, string indent="", bool sectionFirst = false, bool sectionLast = false, bool parentLast = false) {
+    int i = 0;
+    int t = 0;
     for (auto &token : *tokens) {
-      cout << Utils::Indent(depth);
-      cout << token.describe() << endl;
-      if (token.is(Mark::End)) cout << endl;
-      for (int s = 0; s < token.children.size(); s++){
-        if (s != 0) { cout << Utils::Indent(depth + 1) << "--" << endl; }
-        Log(&token.children[s], depth + 1);
+      bool first = t == 0;
+      bool last = t == tokens->size() - 1;
+      bool content = token.children.size() > 0;
+
+      if (!indent.empty() && first) {
+        cout << indent.substr(0, indent.size() - 4) << "├─";
+      } else {
+        cout << indent;
       }
+
+      cout << ( tokens->size() == 1 ? "─" : first ? ( indent.empty() ? "┌" : "┬" ) : last && !content ? "└" : "├" );
+
+      cout << "─ ";
+      cout << token.marker() << " ╴ ";
+      cout << token.describe() << "  ← ";
+      cout << token.code();
+      cout << endl;
+      
+      if (token.is(Mark::End)) {
+        if (!last) cout << indent << "│" << endl;
+        i = -1;
+      }
+
+      if (content) cout << indent << "├─╮" << endl;
+
+      int sections = 0;
+      for (int s = 0; s < token.children.size(); s++) if (!token.children[s].empty()) sections++;
+
+      int section = 0;
+      for (int s = 0; s < token.children.size(); s++) {
+        if (section != 0) cout << indent << "│ │ •" << endl;
+        if (!token.children[s].empty()) {
+          Log(&token.children[s], indent + "│ │ ", section == 0, s == sections - 1 && sections > 1, last);
+          section++;
+        }
+      }
+
+      if (sections > 0) cout << indent << ( last ? "└" : "├" ) << "─╯" << endl;
+      
+      i++;
+      t++;
     }
   }
 
-  static void Log(Token* token, int depth = 0) {
+  static void Log(Token* token) {
     vector<Token> tokens = { *token };
-    Log(&tokens, depth);
+    Log(&tokens);
   }
 
   bool contains(string contents) { return contents.compare(this->contents) == 0; }
@@ -49,7 +85,9 @@ struct Token {
     }
   }
 
-  string describe() { return "<" + Names::Mark[mark] + "> [L" + std::to_string(source.line) + "|C" + std::to_string(source.column) + "] : |" + regex_replace(contents, Utils::Flatten, " ") + "|";  };
+  string describe() { return "<" + Names::Mark[mark] + ">"; };
+  string code() { return "|" + regex_replace(contents, Utils::Flatten, " ") + "|"; }
+  string marker() { return "[L" + std::to_string(source.line) + ":C" + std::to_string(source.column) + "]";  }
 
   Token detail(string descriptor) {
     Token change = Token(this);

@@ -27,10 +27,7 @@ Reference Runtime::load(string path, Reference in, Scope scope) {
 	if (!stream.good()) return Value::Empty();
 	string bismuth((istreambuf_iterator<char>(stream)), istreambuf_iterator<char>());
 
-	if (Bismuth::Verbose) {
-		cout << "\n\n--- Bismuth[" << path << "] ---" << endl;
-		cout << endl << bismuth << endl;
-	}
+	if (Bismuth::Verbose) cout << Utils::Prefix(bismuth, "│   ", "\n┌┄┈ Bismuth [" + path + "]\n│\n│\n");
 
 	Reference result = interpret(bismuth);
 	scopes.pop();
@@ -129,10 +126,7 @@ Reference Runtime::interpret(string bismuth) {
 	vector<Token> tokens;
 	Analyse(bismuth, &tokens);
 
-	if (Bismuth::Verbose) {
-		cout << "\n\n--- Tokens ---\n" << endl;
-		Token::Log(&tokens);
-	}
+	if (Bismuth::Verbose) cout << Utils::Prefixed([&]{ Token::Log(&tokens); }, "│   ", "\n│\n│\n└┄┈\n┊\n┌┄┈ Tokens\n│\n│\n");
 
 	return interpret(&tokens);
 }
@@ -141,10 +135,7 @@ Reference Runtime::interpret(vector<Token>* tokens) {
 	vector<Node> tree;
 	Parse(tokens, &tree);
 
-	if (Bismuth::Verbose) {
-		cout << "\n\n--- Tree ---\n" << endl;
-		Node::Log(&tree);
-	}
+	if (Bismuth::Verbose) cout << Utils::Prefixed([&]{ Node::Log(&tree); }, "│   ", "\n│\n└┄┈\n┊\n┌┄┈ Abstract Syntax Tree\n│\n│\n");
 
 	return interpret(&tree);
 }
@@ -153,21 +144,15 @@ Reference Runtime::interpret(vector<Node>* tree) {
 	vector<Annotated> instructions;
 	Machine::Compile(this, tree, &instructions);
 
-	if (Bismuth::Verbose) {
-		cout << "\n\n--- Instructions ---\n" << endl;
-		Machine::Log(this, &instructions);
-		cout << endl;
-	}
+	if (Bismuth::Verbose) cout << Utils::Prefixed([&, this]{ Machine::Log(this, &instructions); }, "│  ", "\n│\n└┄┈\n┊\n┌┄┈ Instructions\n│\n│\n");
 
 	Instance = this;
 	Reference result = run(instructions);
 	
 	if (Bismuth::Verbose) {
-		cout << "\n\n--- Result ---\n" << endl;
-		cout << result->describe() << endl << endl;
-		cout << "\n--- Globals ---\n" << endl;
-		Log(global);
-		cout << endl << endl;
+		cout << Utils::Prefix("=> " + result->describe(), "│   ", "\n│\n└┄┈\n┊\n┌┄┈ Result\n│\n│\n");
+		cout << Utils::Prefixed([&,this]{ Log(global); }, "│   ", "\n│\n│\n└┄┈\n┊\n┌┄┈ Globals\n│\n│\n");
+		cout << endl << "│" << endl << "└┄┈" << endl << endl;
 	}
 
 	return result;
